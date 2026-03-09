@@ -64,6 +64,21 @@ def format_relative_time(timestamp: str, *, now: datetime) -> str:
     return f"{seconds // 86400}d ago"
 
 
+def pick_related_news(
+    item: dict,
+    news_items: list[dict],
+) -> dict | None:
+    route_key = f'{item["origin"]}-{item["destination"]}'
+
+    for news in news_items:
+        if news.get("related_route") == route_key:
+            return news
+    for news in news_items:
+        if news.get("related_airline") == item["airline"]:
+            return news
+    return None
+
+
 def main() -> None:
     airlines = load_json(AIRLINES_FILE)
     airports = load_json(AIRPORTS_FILE)
@@ -107,6 +122,7 @@ def main() -> None:
     for item in seed["changes"]:
         airline = airline_map[item["airline"]]
         route_label = f'{item["origin"]} → {item["destination"]}'
+        related_news = pick_related_news(item, seed["news"])
         if item["priority"] == "HIGH":
             high_changes += 1
         if item["type"] == "NEW_ROUTE":
@@ -123,6 +139,9 @@ def main() -> None:
                 "summary": item["summary"],
                 "detected_at": item["detected_at"],
                 "time": format_relative_time(item["detected_at"], now=generated_dt),
+                "source_name": item.get("source_name") or (related_news.get("source") if related_news else None),
+                "source_url": item.get("source_url") or (related_news.get("url") if related_news else None),
+                "source_lang": item.get("source_lang") or (related_news.get("lang") if related_news else None),
             }
         )
 
@@ -133,6 +152,7 @@ def main() -> None:
                 "source": item["source"],
                 "title": item["title"],
                 "url": item["url"],
+                "lang": item.get("lang", "ko"),
                 "related_airline": item.get("related_airline"),
                 "related_route": item.get("related_route"),
                 "published_at": item["published_at"],

@@ -14,6 +14,13 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+function buildTranslatedUrl(url, lang) {
+  if (!url) return "#";
+  if (!lang || lang === "ko") return url;
+  const sourceLang = lang === "ja" || lang === "en" ? lang : "auto";
+  return `https://translate.google.com/translate?sl=${sourceLang}&tl=ko&u=${encodeURIComponent(url)}`;
+}
+
 function formatStatus(status) {
   if (status === "ACTIVE") return "ACTIVE";
   if (status === "SUSPENDED") return "SUSPENDED";
@@ -62,18 +69,42 @@ function renderChanges() {
     : state.dashboard.changes.filter((item) => item.priority === state.changeFilter);
 
   document.getElementById("changeCount").textContent = String(items.length);
-  document.getElementById("changesFeed").innerHTML = items.map((item, index) => `
-    <div class="change-item ${escapeHtml(item.priority)}" style="animation-delay:${index * 0.05}s">
+  document.getElementById("changesFeed").innerHTML = items.map((item, index) => {
+    const content = `
       <div class="change-top">
         <span class="change-emoji">${escapeHtml(item.emoji)}</span>
         <span class="change-type ${escapeHtml(item.priority)}">${escapeHtml(item.type)}</span>
         <span class="change-airline">${escapeHtml(item.airline)} ${escapeHtml(item.airline_name)}</span>
         <span class="change-route">${escapeHtml(item.route)}</span>
+        ${item.source_name ? `<span class="change-source">${escapeHtml(item.source_name)}</span>` : ""}
         <span class="change-time">${escapeHtml(item.time)}</span>
       </div>
       <div class="change-summary">${escapeHtml(item.summary)}</div>
-    </div>
-  `).join("");
+    `;
+
+    if (!item.source_url) {
+      return `
+        <div
+          class="change-item ${escapeHtml(item.priority)}"
+          style="animation-delay:${index * 0.05}s"
+        >
+          ${content}
+        </div>
+      `;
+    }
+
+    return `
+      <a
+        class="change-item ${escapeHtml(item.priority)} is-link"
+        style="animation-delay:${index * 0.05}s"
+        href="${escapeHtml(buildTranslatedUrl(item.source_url, item.source_lang))}"
+        target="_blank"
+        rel="noreferrer"
+      >
+        ${content}
+      </a>
+    `;
+  }).join("");
 }
 
 function renderRoutes() {
@@ -107,7 +138,7 @@ function renderAirlines() {
 function renderNews() {
   const items = state.dashboard.news;
   document.getElementById("newsFeed").innerHTML = items.map((item) => `
-    <a class="news-item" href="${escapeHtml(item.url || "#")}" target="_blank" rel="noreferrer">
+    <a class="news-item" href="${escapeHtml(buildTranslatedUrl(item.url, item.lang))}" target="_blank" rel="noreferrer">
       <div class="news-source">${escapeHtml(item.source)}</div>
       <div class="news-title">${escapeHtml(item.title)}</div>
       <div class="news-time">${escapeHtml(item.time)}</div>

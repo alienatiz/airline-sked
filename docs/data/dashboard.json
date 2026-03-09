@@ -196,7 +196,10 @@
       "od": "ICN-KOJ",
       "summary": "제주항공 인천-가고시마 신규 취항 감지. 주 3회 운항 예정.",
       "detected_at": "2026-03-09T08:40:00+09:00",
-      "time": "20m ago"
+      "time": "20m ago",
+      "source_name": "TRAICY Global",
+      "source_url": "https://en.traicy.com/posts/2025070525142/",
+      "source_lang": "en"
     },
     {
       "type": "ROUTE_SUSPENDED",
@@ -208,7 +211,10 @@
       "od": "ICN-TAK",
       "summary": "에어서울 인천-다카마쓰 노선 운휴 감지.",
       "detected_at": "2026-03-09T08:05:00+09:00",
-      "time": "55m ago"
+      "time": "55m ago",
+      "source_name": "파이낸셜뉴스",
+      "source_url": "https://www.fnnews.com/news/202503271009577279",
+      "source_lang": "ko"
     },
     {
       "type": "FREQ_CHANGE",
@@ -220,7 +226,10 @@
       "od": "ICN-NRT",
       "summary": "대한항공 인천-나리타 노선 주간 운항 빈도 변경.",
       "detected_at": "2026-03-09T07:15:00+09:00",
-      "time": "1h ago"
+      "time": "1h ago",
+      "source_name": "TRAICY Global",
+      "source_url": "https://en.traicy.com/posts/2026012432109/",
+      "source_lang": "en"
     },
     {
       "type": "TIME_CHANGE",
@@ -232,7 +241,10 @@
       "od": "HND-GMP",
       "summary": "ANA 하네다-김포 출발 시각 변경.",
       "detected_at": "2026-03-09T05:50:00+09:00",
-      "time": "3h ago"
+      "time": "3h ago",
+      "source_name": "Flight.info",
+      "source_url": "https://www.flight.info/NH864",
+      "source_lang": "en"
     }
   ],
   "routes": [
@@ -371,7 +383,8 @@
     {
       "source": "Aviation Wire",
       "title": "제주항공, 인천-가고시마 노선 개설 계획 보도",
-      "url": "https://example.com/news/jejuair-koj",
+      "url": "https://en.traicy.com/posts/2025070525142/",
+      "lang": "en",
       "related_airline": "7C",
       "related_route": "ICN-KOJ",
       "published_at": "2026-03-09T07:30:00+09:00",
@@ -380,7 +393,8 @@
     {
       "source": "Traicy",
       "title": "ANA, 하네다-김포 노선 스케줄 조정",
-      "url": "https://example.com/news/ana-gmp",
+      "url": "https://www.flight.info/NH864",
+      "lang": "en",
       "related_airline": "NH",
       "related_route": "HND-GMP",
       "published_at": "2026-03-09T05:10:00+09:00",
@@ -389,7 +403,8 @@
     {
       "source": "연합뉴스",
       "title": "티웨이항공, 대구-후쿠오카 신규 노선 검토",
-      "url": "https://example.com/news/tway-fuk",
+      "url": "https://en.traicy.com/posts/2026030333320/",
+      "lang": "en",
       "related_airline": "TW",
       "related_route": "TAE-FUK",
       "published_at": "2026-03-08T20:00:00+09:00",
