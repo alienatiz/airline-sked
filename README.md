@@ -22,7 +22,7 @@ Open-source monitoring for Korea-Japan airline route changes.
   - `OZ`: live browser-backed schedule extraction from the official Asiana schedule flow
 - FastAPI service scaffold with health/root endpoints and route/schedule/change API modules
 - Static GitHub Pages homepage and dashboard
-- CLI commands for database init/seed, scraping, diff, and serving the API
+- CLI commands for database init/seed, scraping, docs rebuild, diff, and serving the API
 - Telegram/Discord message formatting utilities
 - Test coverage for scraper helpers, diff helpers, and formatter logic
 
@@ -113,6 +113,7 @@ airline-sked serve
 Build dashboard data:
 
 ```bash
+airline-sked docs rebuild
 python scripts/build_pages_data.py
 ```
 
@@ -120,6 +121,7 @@ python scripts/build_pages_data.py
 
 - `KE` is currently route-level live crawling, not full timetable extraction.
 - `OZ` is the current live schedule crawler.
+- GitHub Actions can refresh `docs/data/dashboard.json` and Pages deployment rebuilds the dashboard snapshot on publish.
 - Several other airline scraper classes still exist only as templates and are not included above as implemented features.
 - `bot telegram`, `bot discord`, and `run` commands are still placeholders.
 

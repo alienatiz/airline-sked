@@ -1,0 +1,62 @@
+name: Refresh Dashboard Data
+
+on:
+  schedule:
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "dashboard-refresh"
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install project dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Install Playwright Chromium
+        run: python -m playwright install --with-deps chromium
+
+      - name: Initialize database
+        run: |
+          airline-sked db init
+          airline-sked db seed
+
+      - name: Scrape Korean Air
+        continue-on-error: true
+        run: airline-sked scrape run --airline KE
+
+      - name: Scrape Asiana
+        continue-on-error: true
+        run: airline-sked scrape run --airline OZ
+
+      - name: Rebuild docs dashboard
+        run: airline-sked docs rebuild
+
+      - name: Commit dashboard snapshot
+        run: |
+          if git diff --quiet -- docs/data/dashboard.json; then
+            echo "No dashboard changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/data/dashboard.json
+          git commit -m "chore: refresh dashboard snapshot"
+          git push
