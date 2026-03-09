@@ -30,7 +30,12 @@ function formatFlightWindow(route) {
 function renderStats() {
   const { summary } = state.dashboard;
   const stats = [
-    { label: "모니터링 노선", value: summary.total_routes, sub: `ACTIVE ${summary.active_routes}`, color: "var(--accent-blue)" },
+    {
+      label: "등록 항공사",
+      value: summary.total_airlines,
+      sub: `KR ${summary.kr_airlines} · JP ${summary.jp_airlines}`,
+      color: "var(--accent-blue)",
+    },
     {
       label: "라이브 크롤러",
       value: summary.live_airlines,
@@ -94,7 +99,7 @@ function renderAirlines() {
         <span class="airline-name">${escapeHtml(airline.name)}</span>
         <span class="crawl-badge ${escapeHtml(airline.crawl_status)}" title="${escapeHtml(airline.crawl_note)}">${escapeHtml(airline.crawl_label)}</span>
       </span>
-      <span class="airline-count">${escapeHtml(airline.routes)}</span>
+      <span class="airline-count">${escapeHtml(airline.carrier_type)}</span>
     </a>
   `).join("");
 }

@@ -4,6 +4,9 @@
   "summary": {
     "total_routes": 10,
     "active_routes": 8,
+    "total_airlines": 14,
+    "kr_airlines": 8,
+    "jp_airlines": 6,
     "active_airlines": 9,
     "live_airlines": 2,
     "live_schedule_airlines": 1,

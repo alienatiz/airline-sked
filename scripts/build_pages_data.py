@@ -180,6 +180,9 @@ def main() -> None:
         "summary": {
             "total_routes": len(routes),
             "active_routes": active_routes,
+            "total_airlines": len(airlines_payload),
+            "kr_airlines": sum(1 for item in airlines_payload if item["country"] == "KR"),
+            "jp_airlines": sum(1 for item in airlines_payload if item["country"] == "JP"),
             "active_airlines": sum(1 for item in airlines_payload if item["routes"] > 0),
             "live_airlines": live_airlines,
             "live_schedule_airlines": live_schedule_airlines,
