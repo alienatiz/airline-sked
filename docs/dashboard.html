@@ -443,12 +443,48 @@
   .airline-code.kr { color: var(--accent-blue); }
   .airline-code.jp { color: var(--accent-red); }
 
+  .airline-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
   .airline-name {
     font-size: 12px;
     color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .crawl-badge {
+    align-self: flex-start;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-muted);
+    letter-spacing: 0.2px;
+  }
+
+  .crawl-badge.live-schedule {
+    color: var(--accent-green);
+    border-color: rgba(74,222,128,0.25);
+    background: rgba(74,222,128,0.08);
+  }
+
+  .crawl-badge.live-route {
+    color: var(--accent-blue);
+    border-color: rgba(56,189,248,0.25);
+    background: rgba(56,189,248,0.08);
+  }
+
+  .crawl-badge.planned {
+    color: var(--text-muted);
+    border-color: var(--border-subtle);
+    background: rgba(100,116,139,0.08);
   }
 
   .airline-count {
@@ -564,6 +600,7 @@
     <div class="status-dot"></div>
     <span id="statusLabel">SNAPSHOT</span>
     <span style="margin-left:12px;">Last scan: <span id="lastScan">—</span></span>
+    <span style="margin-left:12px;">Coverage: <span id="crawlCoverage">—</span></span>
   </div>
 </header>
 

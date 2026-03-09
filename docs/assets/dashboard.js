@@ -31,7 +31,12 @@ function renderStats() {
   const { summary } = state.dashboard;
   const stats = [
     { label: "모니터링 노선", value: summary.total_routes, sub: `ACTIVE ${summary.active_routes}`, color: "var(--accent-blue)" },
-    { label: "활성 항공사", value: summary.active_airlines, sub: "repo snapshot", color: "var(--accent-green)" },
+    {
+      label: "라이브 크롤러",
+      value: summary.live_airlines,
+      sub: `schedule ${summary.live_schedule_airlines} · route ${summary.live_route_airlines}`,
+      color: "var(--accent-green)",
+    },
     { label: "긴급 변경", value: summary.high_changes, sub: "current snapshot", color: "var(--high)" },
     { label: "신규 취항", value: summary.new_routes, sub: "current snapshot", color: "var(--accent-amber)" },
     { label: "총 감지 이벤트", value: summary.total_changes, sub: state.dashboard.source_mode, color: "var(--accent-purple)" },
@@ -85,7 +90,10 @@ function renderAirlines() {
   document.getElementById("airlineGrid").innerHTML = state.dashboard.airlines.map((airline) => `
     <a class="airline-item" href="${escapeHtml(airline.schedule_url || airline.website_url || "#")}" target="_blank" rel="noreferrer">
       <span class="airline-code ${escapeHtml(airline.country.toLowerCase())}">${escapeHtml(airline.code)}</span>
-      <span class="airline-name">${escapeHtml(airline.name)}</span>
+      <span class="airline-meta">
+        <span class="airline-name">${escapeHtml(airline.name)}</span>
+        <span class="crawl-badge ${escapeHtml(airline.crawl_status)}" title="${escapeHtml(airline.crawl_note)}">${escapeHtml(airline.crawl_label)}</span>
+      </span>
       <span class="airline-count">${escapeHtml(airline.routes)}</span>
     </a>
   `).join("");
@@ -104,7 +112,7 @@ function renderNews() {
 
 function renderGeneratedAt() {
   const generatedAt = new Date(state.dashboard.generated_at);
-  document.getElementById("statusLabel").textContent = "SNAPSHOT";
+  document.getElementById("statusLabel").textContent = state.dashboard.summary.live_airlines > 0 ? "LIVE COVERAGE" : "SNAPSHOT";
   document.getElementById("lastScan").textContent = generatedAt.toLocaleString("ko-KR", {
     year: "numeric",
     month: "2-digit",
@@ -112,11 +120,14 @@ function renderGeneratedAt() {
     hour: "2-digit",
     minute: "2-digit",
   });
+  document.getElementById("crawlCoverage").textContent =
+    `KE route live · OZ schedule live`;
 }
 
 function setError(message) {
   document.getElementById("statusLabel").textContent = "ERROR";
   document.getElementById("lastScan").textContent = message;
+  document.getElementById("crawlCoverage").textContent = "—";
 }
 
 function filterChanges(button) {

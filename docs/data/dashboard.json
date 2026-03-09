@@ -5,6 +5,9 @@
     "total_routes": 10,
     "active_routes": 8,
     "active_airlines": 9,
+    "live_airlines": 2,
+    "live_schedule_airlines": 1,
+    "live_route_airlines": 1,
     "high_changes": 2,
     "new_routes": 1,
     "total_changes": 4
@@ -17,7 +20,10 @@
       "carrier_type": "FSC",
       "routes": 2,
       "website_url": "https://www.koreanair.com",
-      "schedule_url": "https://www.koreanair.com/flights/en-kr/flights-from-korea"
+      "schedule_url": "https://www.koreanair.com/flights/en-kr/flights-from-korea",
+      "crawl_status": "live-route",
+      "crawl_label": "LIVE ROUTE",
+      "crawl_note": "Official page route extraction"
     },
     {
       "code": "OZ",
@@ -26,7 +32,10 @@
       "carrier_type": "FSC",
       "routes": 1,
       "website_url": "https://flyasiana.com",
-      "schedule_url": "https://flyasiana.com/C/US/EN/contents/book-online"
+      "schedule_url": "https://flyasiana.com/I/US/EN/RetrieveFlightSchedule.do",
+      "crawl_status": "live-schedule",
+      "crawl_label": "LIVE SCHEDULE",
+      "crawl_note": "Official browser-backed schedule search"
     },
     {
       "code": "7C",
@@ -35,7 +44,10 @@
       "carrier_type": "LCC",
       "routes": 1,
       "website_url": "https://www.jejuair.net",
-      "schedule_url": "https://www.jejuair.net/en/prepare/flight/viewScheduleInfo.do"
+      "schedule_url": "https://www.jejuair.net/en/prepare/flight/viewScheduleInfo.do",
+      "crawl_status": "planned",
+      "crawl_label": "PLANNED",
+      "crawl_note": "Crawler not implemented yet"
     },
     {
       "code": "LJ",
@@ -44,7 +56,10 @@
       "carrier_type": "LCC",
       "routes": 1,
       "website_url": "https://www.jinair.com",
-      "schedule_url": "https://www.jinair.com"
+      "schedule_url": "https://www.jinair.com",
+      "crawl_status": "planned",
+      "crawl_label": "PLANNED",
+      "crawl_note": "Crawler not implemented yet"
     },
     {
       "code": "TW",
@@ -53,7 +68,10 @@
       "carrier_type": "LCC",
       "routes": 1,
       "website_url": "https://www.twayair.com",
-      "schedule_url": "https://www.twayair.com/app/serviceInfo/flightSchedule"
+      "schedule_url": "https://www.twayair.com/app/serviceInfo/flightSchedule",
+      "crawl_status": "planned",
+      "crawl_label": "PLANNED",
+      "crawl_note": "Crawler not implemented yet"
     },
     {
       "code": "RS",
@@ -62,7 +80,10 @@
       "carrier_type": "LCC",
       "routes": 1,
       "website_url": "https://flyairseoul.com/CW/en/main.do",
-      "schedule_url": "https://flyairseoul.com/CW/en/booking_reservation.do"
+      "schedule_url": "https://flyairseoul.com/CW/en/booking_reservation.do",
+      "crawl_status": "planned",
+      "crawl_label": "PLANNED",
+      "crawl_note": "Crawler not implemented yet"
     },
     {
       "code": "BX",
@@ -71,7 +92,10 @@
       "carrier_type": "LCC",
       "routes": 0,
       "website_url": "https://en.airbusan.com",
-      "schedule_url": "https://en.airbusan.com/content/individual/booking/reserve/booking"
+      "schedule_url": "https://en.airbusan.com/content/individual/booking/reserve/booking",
+      "crawl_status": "planned",
+      "crawl_label": "PLANNED",
+      "crawl_note": "Crawler not implemented yet"
     },
     {
       "code": "ZE",
@@ -80,7 +104,10 @@
       "carrier_type": "LCC",
       "routes": 0,
       "website_url": "https://www.eastarjet.com",
-      "schedule_url": "https://www.eastarjet.com/newstar/PGWIG00001"
+      "schedule_url": "https://www.eastarjet.com/newstar/PGWIG00001",
+      "crawl_status": "planned",
+      "crawl_label": "PLANNED",
+      "crawl_note": "Crawler not implemented yet"
     },
     {
       "code": "NH",
@@ -89,7 +116,10 @@
       "carrier_type": "FSC",
       "routes": 1,
       "website_url": "https://www.ana.co.jp",
-      "schedule_url": "https://www.ana.co.jp/en/jp/book-plan/airinfo/timetable/international/"
+      "schedule_url": "https://www.ana.co.jp/en/jp/book-plan/airinfo/timetable/international/",
+      "crawl_status": "planned",
+      "crawl_label": "PLANNED",
+      "crawl_note": "Crawler not implemented yet"
     },
     {
       "code": "JL",
@@ -98,7 +128,10 @@
       "carrier_type": "FSC",
       "routes": 1,
       "website_url": "https://www.jal.co.jp",
-      "schedule_url": "https://www.jal.co.jp/jp/en/inter/route/"
+      "schedule_url": "https://www.jal.co.jp/jp/en/inter/route/",
+      "crawl_status": "planned",
+      "crawl_label": "PLANNED",
+      "crawl_note": "Crawler not implemented yet"
     },
     {
       "code": "MM",
@@ -107,7 +140,10 @@
       "carrier_type": "LCC",
       "routes": 1,
       "website_url": "https://www.flypeach.com/en",
-      "schedule_url": "https://www.flypeach.com/en/lm/st/routemap"
+      "schedule_url": "https://www.flypeach.com/en/lm/st/routemap",
+      "crawl_status": "planned",
+      "crawl_label": "PLANNED",
+      "crawl_note": "Crawler not implemented yet"
     },
     {
       "code": "GK",
@@ -116,7 +152,10 @@
       "carrier_type": "LCC",
       "routes": 0,
       "website_url": "https://www.jetstar.com/jp/en/home",
-      "schedule_url": "https://www.jetstar.com/jp/en/flights"
+      "schedule_url": "https://www.jetstar.com/jp/en/flights",
+      "crawl_status": "planned",
+      "crawl_label": "PLANNED",
+      "crawl_note": "Crawler not implemented yet"
     },
     {
       "code": "IJ",
@@ -125,7 +164,10 @@
       "carrier_type": "LCC",
       "routes": 0,
       "website_url": "https://jp.ch.com",
-      "schedule_url": "https://jp.ch.com"
+      "schedule_url": "https://jp.ch.com",
+      "crawl_status": "planned",
+      "crawl_label": "PLANNED",
+      "crawl_note": "Crawler not implemented yet"
     },
     {
       "code": "BC",
@@ -134,7 +176,10 @@
       "carrier_type": "LCC",
       "routes": 0,
       "website_url": "https://www.skymark.co.jp/en",
-      "schedule_url": "https://www.skymark.co.jp/en/"
+      "schedule_url": "https://www.skymark.co.jp/en/",
+      "crawl_status": "planned",
+      "crawl_label": "PLANNED",
+      "crawl_note": "Crawler not implemented yet"
     }
   ],
   "changes": [

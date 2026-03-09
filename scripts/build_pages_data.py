@@ -29,6 +29,19 @@ EMOJI_BY_TYPE = {
     "SEASONAL_END": "🍂",
 }
 
+CRAWL_CAPABILITIES = {
+    "KE": {
+        "crawl_status": "live-route",
+        "crawl_label": "LIVE ROUTE",
+        "crawl_note": "Official page route extraction",
+    },
+    "OZ": {
+        "crawl_status": "live-schedule",
+        "crawl_label": "LIVE SCHEDULE",
+        "crawl_note": "Official browser-backed schedule search",
+    },
+}
+
 
 def load_json(path: Path) -> list[dict] | dict:
     with path.open("r", encoding="utf-8") as handle:
@@ -128,7 +141,24 @@ def main() -> None:
         )
 
     airlines_payload = []
+    live_airlines = 0
+    live_schedule_airlines = 0
+    live_route_airlines = 0
     for item in airlines:
+        crawl = CRAWL_CAPABILITIES.get(
+            item["iata_code"],
+            {
+                "crawl_status": "planned",
+                "crawl_label": "PLANNED",
+                "crawl_note": "Crawler not implemented yet",
+            },
+        )
+        if crawl["crawl_status"] != "planned":
+            live_airlines += 1
+        if crawl["crawl_status"] == "live-schedule":
+            live_schedule_airlines += 1
+        if crawl["crawl_status"] == "live-route":
+            live_route_airlines += 1
         airlines_payload.append(
             {
                 "code": item["iata_code"],
@@ -138,6 +168,9 @@ def main() -> None:
                 "routes": route_counter.get(item["iata_code"], 0),
                 "website_url": item["website_url"],
                 "schedule_url": item["schedule_url"],
+                "crawl_status": crawl["crawl_status"],
+                "crawl_label": crawl["crawl_label"],
+                "crawl_note": crawl["crawl_note"],
             }
         )
 
@@ -148,6 +181,9 @@ def main() -> None:
             "total_routes": len(routes),
             "active_routes": active_routes,
             "active_airlines": sum(1 for item in airlines_payload if item["routes"] > 0),
+            "live_airlines": live_airlines,
+            "live_schedule_airlines": live_schedule_airlines,
+            "live_route_airlines": live_route_airlines,
             "high_changes": high_changes,
             "new_routes": new_routes,
             "total_changes": len(changes),

@@ -1,6 +1,6 @@
 [
   {"iata_code": "KE", "icao_code": "KAL", "name_ko": "대한항공", "name_en": "Korean Air", "name_ja": "大韓航空", "country": "KR", "carrier_type": "FSC", "website_url": "https://www.koreanair.com", "schedule_url": "https://www.koreanair.com/flights/en-kr/flights-from-korea"},
-  {"iata_code": "OZ", "icao_code": "AAR", "name_ko": "아시아나항공", "name_en": "Asiana Airlines", "name_ja": "アシアナ航空", "country": "KR", "carrier_type": "FSC", "website_url": "https://flyasiana.com", "schedule_url": "https://flyasiana.com/C/US/EN/contents/book-online"},
+  {"iata_code": "OZ", "icao_code": "AAR", "name_ko": "아시아나항공", "name_en": "Asiana Airlines", "name_ja": "アシアナ航空", "country": "KR", "carrier_type": "FSC", "website_url": "https://flyasiana.com", "schedule_url": "https://flyasiana.com/I/US/EN/RetrieveFlightSchedule.do"},
   {"iata_code": "7C", "icao_code": "JJA", "name_ko": "제주항공", "name_en": "Jeju Air", "name_ja": "チェジュ航空", "country": "KR", "carrier_type": "LCC", "website_url": "https://www.jejuair.net", "schedule_url": "https://www.jejuair.net/en/prepare/flight/viewScheduleInfo.do"},
   {"iata_code": "LJ", "icao_code": "JNA", "name_ko": "진에어", "name_en": "Jin Air", "name_ja": "ジンエアー", "country": "KR", "carrier_type": "LCC", "website_url": "https://www.jinair.com", "schedule_url": "https://www.jinair.com"},
   {"iata_code": "TW", "icao_code": "TWB", "name_ko": "티웨이항공", "name_en": "T'way Air", "name_ja": "ティーウェイ航空", "country": "KR", "carrier_type": "LCC", "website_url": "https://www.twayair.com", "schedule_url": "https://www.twayair.com/app/serviceInfo/flightSchedule"},
