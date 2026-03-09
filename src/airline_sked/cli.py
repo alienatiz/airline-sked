@@ -72,6 +72,8 @@ def db_seed():
 def scrape_run(
     airline: Optional[str] = typer.Option(None, "--airline", "-a", help="항공사 코드 (예: KE)"),
     all_airlines: bool = typer.Option(False, "--all", help="전체 항공사 수집"),
+    origin: Optional[str] = typer.Option(None, "--origin", help="출발지 IATA 코드"),
+    destination: Optional[str] = typer.Option(None, "--destination", help="도착지 IATA 코드"),
 ):
     """스케줄 수집 실행."""
     setup_logging()
@@ -79,8 +81,64 @@ def scrape_run(
         console.print("[yellow]⚠[/yellow] --airline 또는 --all 옵션을 지정하세요.")
         raise typer.Exit(1)
 
-    console.print(f"[blue]▶[/blue] 수집 시작: {'전체' if all_airlines else airline}")
-    console.print("[green]✓[/green] 수집 완료")
+    from airline_sked.scrapers.runner import run_all_scrapers, run_scraper_by_code
+
+    if airline and all_airlines:
+        console.print("[yellow]⚠[/yellow] --airline 과 --all 은 함께 사용할 수 없습니다.")
+        raise typer.Exit(1)
+
+    async def _run() -> None:
+        if all_airlines:
+            console.print("[blue]▶[/blue] 전체 항공사 수집 시작")
+            summaries = await run_all_scrapers()
+            table = Table(title="수집 결과")
+            table.add_column("항공사", style="cyan")
+            table.add_column("상태", style="white")
+            table.add_column("노선", justify="right")
+            table.add_column("스케줄", justify="right")
+            table.add_column("변경", justify="right")
+            table.add_column("오류", justify="right")
+            for summary in summaries:
+                table.add_row(
+                    summary.airline_code,
+                    "OK" if summary.success else "FAILED",
+                    str(summary.route_count),
+                    str(summary.saved_schedule_count),
+                    str(summary.change_count),
+                    str(len(summary.errors)),
+                )
+            console.print(table)
+            return
+
+        assert airline is not None
+        console.print(f"[blue]▶[/blue] 수집 시작: {airline.upper()}")
+        _, events, summary = await run_scraper_by_code(
+            airline.upper(),
+            origin=origin.upper() if origin else None,
+            destination=destination.upper() if destination else None,
+        )
+
+        if not summary.success:
+            console.print(f"[red]✗[/red] 수집 실패: {', '.join(summary.errors) or 'unknown error'}")
+            raise typer.Exit(1)
+
+        console.print(
+            f"[green]✓[/green] 수집 완료: "
+            f"{summary.route_count} routes, "
+            f"{summary.saved_schedule_count} schedules, "
+            f"{summary.change_count} changes"
+        )
+
+        if events:
+            preview = Table(title="감지된 변경")
+            preview.add_column("이벤트", style="magenta")
+            preview.add_column("노선", style="cyan")
+            preview.add_column("요약", style="white")
+            for event in events:
+                preview.add_row(event.event_type.value, event.od_pair, event.summary)
+            console.print(preview)
+
+    asyncio.run(_run())
 
 
 @scrape_app.command("list")

@@ -10,9 +10,9 @@ from typing import Optional
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from airline_sked.models import Route, Schedule, Change
+from airline_sked.models import Change, Route, Schedule
 from airline_sked.scrapers.base import ScrapeResult, ScrapedSchedule
-from airline_sked.differ.events import EventType, RouteEvent, EVENT_PRIORITY
+from airline_sked.differ.events import EventType, RouteEvent
 
 logger = logging.getLogger(__name__)
 
@@ -164,9 +164,10 @@ class DiffEngine:
         await self.session.flush()
         return changes
 
-    async def update_routes(self, result: ScrapeResult) -> None:
+    async def update_routes(self, result: ScrapeResult) -> dict[str, Route]:
         """스크래핑 결과를 기반으로 routes 테이블 업데이트."""
         today = date.today()
+        route_map: dict[str, Route] = {}
 
         for sched in result.schedules:
             stmt = select(Route).where(
@@ -191,4 +192,53 @@ class DiffEngine:
                 route.status = "ACTIVE"
                 route.updated_at = datetime.utcnow()
 
+            route_map[sched.route_key] = route
+
         await self.session.flush()
+        return route_map
+
+    async def save_schedules(
+        self, result: ScrapeResult, route_map: Optional[dict[str, Route]] = None
+    ) -> list[Schedule]:
+        """스크래핑 결과를 schedules 테이블에 스냅샷으로 저장."""
+        schedules: list[Schedule] = []
+        resolved_routes = route_map or {}
+
+        for scraped in result.schedules:
+            route = resolved_routes.get(scraped.route_key)
+            if route is None:
+                stmt = select(Route).where(
+                    Route.airline_code == scraped.airline_code,
+                    Route.origin == scraped.origin,
+                    Route.destination == scraped.destination,
+                )
+                route = (await self.session.exec(stmt)).first()
+
+            if route is None or route.id is None:
+                logger.warning("Route not found for scraped schedule %s", scraped.route_key)
+                continue
+
+            schedule = Schedule(
+                route_id=route.id,
+                season=self._infer_season(scraped.effective_from or date.today()),
+                effective_from=scraped.effective_from,
+                effective_to=scraped.effective_to,
+                days_of_week=scraped.days_of_week,
+                departure_time=scraped.departure_time,
+                arrival_time=scraped.arrival_time,
+                flight_number=scraped.flight_number,
+                aircraft_type=scraped.aircraft_type,
+                frequency_weekly=scraped.frequency_weekly,
+                source=result.source,
+            )
+            self.session.add(schedule)
+            schedules.append(schedule)
+
+        await self.session.flush()
+        return schedules
+
+    @staticmethod
+    def _infer_season(target_date: date) -> str:
+        """날짜를 기준으로 단순 IATA summer/winter 표기로 변환."""
+        suffix = "S" if 3 <= target_date.month <= 10 else "W"
+        return f"{target_date.year}{suffix}"

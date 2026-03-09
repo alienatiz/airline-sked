@@ -16,29 +16,24 @@ async def job_scrape_all() -> None:
     logger.info(f"[Scheduler] 전체 수집 시작: {datetime.now()}")
 
     from airline_sked.scrapers import get_all_scrapers
-    from airline_sked.database import get_session
-    from airline_sked.differ import DiffEngine
+    from airline_sked.scrapers.runner import run_scraper
 
     scrapers = get_all_scrapers()
     all_events = []
 
     for scraper in scrapers:
         try:
-            async with scraper:
-                result = await scraper.scrape_schedules()
-
-            if result.success:
-                async with get_session() as session:
-                    engine = DiffEngine(session)
-                    events = await engine.process_scrape_result(result)
-                    if events:
-                        await engine.save_events(events)
-                        all_events.extend(events)
-                    await engine.update_routes(result)
-
-                logger.info(f"[{scraper.airline_code}] {result.route_count} routes, {len(events)} changes")
+            _, events, summary = await run_scraper(scraper)
+            if summary.success:
+                all_events.extend(events)
+                logger.info(
+                    f"[{scraper.airline_code}] "
+                    f"{summary.route_count} routes, "
+                    f"{summary.saved_schedule_count} schedules, "
+                    f"{summary.change_count} changes"
+                )
             else:
-                logger.warning(f"[{scraper.airline_code}] 수집 실패: {result.errors}")
+                logger.warning(f"[{scraper.airline_code}] 수집 실패: {summary.errors}")
 
         except Exception as e:
             logger.error(f"[{scraper.airline_code}] 예외: {e}")
