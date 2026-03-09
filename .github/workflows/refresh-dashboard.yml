@@ -45,11 +45,11 @@ jobs:
 
       - name: Scrape Korean Air
         continue-on-error: true
-        run: airline-sked scrape run --airline KE
+        run: airline-sked scrape run --airline KE --skip-docs-refresh
 
       - name: Scrape Asiana
         continue-on-error: true
-        run: airline-sked scrape run --airline OZ
+        run: airline-sked scrape run --airline OZ --skip-docs-refresh
 
       - name: Rebuild docs dashboard
         run: airline-sked docs rebuild
