@@ -15,6 +15,7 @@ async def job_scrape_all() -> None:
     """전체 항공사 스케줄 수집 잡."""
     logger.info(f"[Scheduler] 전체 수집 시작: {datetime.now()}")
 
+    from airline_sked.docs_dashboard import refresh_dashboard_data
     from airline_sked.scrapers import get_all_scrapers
     from airline_sked.scrapers.runner import run_scraper
 
@@ -37,6 +38,9 @@ async def job_scrape_all() -> None:
 
         except Exception as e:
             logger.error(f"[{scraper.airline_code}] 예외: {e}")
+
+    output_file = refresh_dashboard_data()
+    logger.info(f"[Scheduler] 대시보드 갱신 완료: {output_file}")
 
     if all_events:
         await _notify_changes(all_events)

@@ -82,6 +82,7 @@ def scrape_run(
         raise typer.Exit(1)
 
     from airline_sked.scrapers.runner import run_all_scrapers, run_scraper_by_code
+    from airline_sked.docs_dashboard import refresh_dashboard_data
 
     if airline and all_airlines:
         console.print("[yellow]⚠[/yellow] --airline 과 --all 은 함께 사용할 수 없습니다.")
@@ -91,6 +92,7 @@ def scrape_run(
         if all_airlines:
             console.print("[blue]▶[/blue] 전체 항공사 수집 시작")
             summaries = await run_all_scrapers()
+            output_file = refresh_dashboard_data()
             table = Table(title="수집 결과")
             table.add_column("항공사", style="cyan")
             table.add_column("상태", style="white")
@@ -108,6 +110,7 @@ def scrape_run(
                     str(len(summary.errors)),
                 )
             console.print(table)
+            console.print(f"[green]✓[/green] 대시보드 갱신: {output_file}")
             return
 
         assert airline is not None
@@ -128,6 +131,8 @@ def scrape_run(
             f"{summary.saved_schedule_count} schedules, "
             f"{summary.change_count} changes"
         )
+        output_file = refresh_dashboard_data()
+        console.print(f"[green]✓[/green] 대시보드 갱신: {output_file}")
 
         if events:
             preview = Table(title="감지된 변경")

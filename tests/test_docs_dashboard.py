@@ -1,0 +1,73 @@
+"""Dashboard data builder tests."""
+
+from __future__ import annotations
+
+import sqlite3
+
+import airline_sked.docs_dashboard as docs_dashboard
+
+
+def test_load_database_routes_prefers_latest_schedule_and_hides_placeholders(tmp_path, monkeypatch):
+    db_path = tmp_path / "airline_sked.db"
+    connection = sqlite3.connect(db_path)
+    cursor = connection.cursor()
+    cursor.execute(
+        """
+        CREATE TABLE routes (
+            id INTEGER PRIMARY KEY,
+            airline_code TEXT,
+            origin TEXT,
+            destination TEXT,
+            status TEXT
+        )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE schedules (
+            id INTEGER PRIMARY KEY,
+            route_id INTEGER,
+            flight_number TEXT,
+            departure_time TEXT,
+            arrival_time TEXT,
+            aircraft_type TEXT,
+            frequency_weekly INTEGER,
+            days_of_week TEXT,
+            collected_at TEXT
+        )
+        """
+    )
+    cursor.execute("INSERT INTO routes VALUES (1, 'KE', 'ICN', 'NRT', 'ACTIVE')")
+    cursor.execute("INSERT INTO routes VALUES (2, 'OZ', 'ICN', 'HND', 'ACTIVE')")
+    cursor.execute(
+        "INSERT INTO schedules VALUES "
+        "(1, 1, 'KE-ICN-NRT', NULL, NULL, NULL, NULL, NULL, '2026-03-09T01:00:00'),"
+        "(2, 2, 'OZ178', '08:00', '10:15', 'A321', 7, '1,2,3,4,5,6,7', '2026-03-09T02:00:00')"
+    )
+    connection.commit()
+    connection.close()
+
+    monkeypatch.setattr(docs_dashboard, "DB_FILE", db_path)
+
+    airline_map = {
+        "KE": {"name_ko": "대한항공"},
+        "OZ": {"name_ko": "아시아나항공"},
+    }
+    airport_map = {
+        "ICN": {"city_ko": "인천", "name_ko": "인천"},
+        "NRT": {"city_ko": "도쿄", "name_ko": "도쿄"},
+        "HND": {"city_ko": "도쿄", "name_ko": "도쿄"},
+    }
+
+    routes, generated_dt = docs_dashboard.load_database_routes(airline_map, airport_map)
+
+    assert generated_dt is not None
+    assert generated_dt.isoformat() == "2026-03-09T02:00:00"
+    assert routes[0]["airline"] == "KE"
+    assert routes[0]["flight_number"] is None
+    assert routes[0]["aircraft_type"] is None
+    assert routes[0]["frequency_label"] == "TBD"
+    assert routes[1]["airline"] == "OZ"
+    assert routes[1]["flight_number"] == "OZ178"
+    assert routes[1]["aircraft_type"] == "A321"
+    assert routes[1]["frequency_label"] == "Daily"
