@@ -150,8 +150,8 @@ def scrape_list():
     table.add_column("상태", style="green")
 
     scrapers = [
-        ("KE", "대한항공", "TODO"),
-        ("OZ", "아시아나항공", "TODO"),
+        ("KE", "대한항공", "LIVE_ROUTE"),
+        ("OZ", "아시아나항공", "LIVE_BROWSER"),
         ("7C", "제주항공", "TODO"),
         ("LJ", "진에어", "TODO"),
         ("TW", "티웨이항공", "TODO"),

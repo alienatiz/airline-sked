@@ -138,7 +138,7 @@ JP_DESTINATIONS = [
 ]
 
 KE_ROUTE_PATTERN = re.compile(
-    r"([A-Za-z][A-Za-z .,'/-]+?)\s+\(([A-Z]{3})\)\s*to\s*([A-Za-z][A-Za-z .,'/-]+?)\s+\(([A-Z]{3})\)"
+    r"([^\(\)]+?)\s*\(([A-Z]{3})\)\s*(?:-|to)\s*([^\(\)]+?)\s*\(([A-Z]{3})\)"
 )
 
 OZ_CITY_BY_AIRPORT = {
@@ -315,7 +315,7 @@ class AirlineScraper(BaseScraper):
                     destination=destination,
                     departure_time="00:00",
                     arrival_time="00:00",
-                    days_of_week="1",
+                    days_of_week="UNKNOWN",
                     aircraft_type=None,
                     frequency_weekly=None,
                 )

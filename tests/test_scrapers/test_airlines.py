@@ -25,6 +25,18 @@ def test_extract_ke_routes_from_text_filters_to_kr_jp_routes():
     assert routes == [("ICN", "NRT"), ("ICN", "KIX"), ("PUS", "FUK")]
 
 
+def test_extract_ke_routes_from_text_supports_hyphenated_korean_cards():
+    text = """
+    서울 (ICN) - 도쿄 (NRT)
+    부산 (PUS) - 후쿠오카 (FUK)
+    서울 (ICN) - 로스앤젤레스 (LAX)
+    """
+
+    routes = _extract_ke_routes_from_text(text)
+
+    assert routes == [("ICN", "NRT"), ("PUS", "FUK")]
+
+
 def test_build_oz_search_payload_uses_city_mapping():
     payload = _build_oz_search_payload("ICN", "NRT", date(2026, 3, 11))
 
