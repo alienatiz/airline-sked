@@ -18,9 +18,11 @@ console = Console()
 db_app = typer.Typer(help="데이터베이스 관리")
 scrape_app = typer.Typer(help="스케줄 수집")
 bot_app = typer.Typer(help="봇 실행")
+docs_app = typer.Typer(help="문서 대시보드 관리")
 app.add_typer(db_app, name="db")
 app.add_typer(scrape_app, name="scrape")
 app.add_typer(bot_app, name="bot")
+app.add_typer(docs_app, name="docs")
 
 
 def setup_logging(level: str = "INFO") -> None:
@@ -188,6 +190,15 @@ def bot_discord():
     """Discord 봇 실행."""
     console.print("[blue]▶[/blue] Discord 봇 시작...")
     console.print("[yellow]⚠[/yellow] 미구현")
+
+
+@docs_app.command("rebuild")
+def docs_rebuild():
+    """문서 대시보드 JSON 재생성."""
+    from airline_sked.docs_dashboard import refresh_dashboard_data
+
+    output_file = refresh_dashboard_data()
+    console.print(f"[green]✓[/green] 대시보드 갱신: {output_file}")
 
 
 @app.command("serve")
