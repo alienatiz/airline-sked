@@ -1,0 +1,351 @@
+{
+  "generated_at": "2026-03-09T09:00:00+09:00",
+  "source_mode": "seed",
+  "summary": {
+    "total_routes": 10,
+    "active_routes": 8,
+    "active_airlines": 9,
+    "high_changes": 2,
+    "new_routes": 1,
+    "total_changes": 4
+  },
+  "airlines": [
+    {
+      "code": "KE",
+      "name": "대한항공",
+      "country": "KR",
+      "carrier_type": "FSC",
+      "routes": 2,
+      "website_url": "https://www.koreanair.com",
+      "schedule_url": "https://www.koreanair.com/flights/en-kr/flights-from-korea"
+    },
+    {
+      "code": "OZ",
+      "name": "아시아나항공",
+      "country": "KR",
+      "carrier_type": "FSC",
+      "routes": 1,
+      "website_url": "https://flyasiana.com",
+      "schedule_url": "https://flyasiana.com/C/US/EN/contents/book-online"
+    },
+    {
+      "code": "7C",
+      "name": "제주항공",
+      "country": "KR",
+      "carrier_type": "LCC",
+      "routes": 1,
+      "website_url": "https://www.jejuair.net",
+      "schedule_url": "https://www.jejuair.net/en/prepare/flight/viewScheduleInfo.do"
+    },
+    {
+      "code": "LJ",
+      "name": "진에어",
+      "country": "KR",
+      "carrier_type": "LCC",
+      "routes": 1,
+      "website_url": "https://www.jinair.com",
+      "schedule_url": "https://www.jinair.com"
+    },
+    {
+      "code": "TW",
+      "name": "티웨이항공",
+      "country": "KR",
+      "carrier_type": "LCC",
+      "routes": 1,
+      "website_url": "https://www.twayair.com",
+      "schedule_url": "https://www.twayair.com/app/serviceInfo/flightSchedule"
+    },
+    {
+      "code": "RS",
+      "name": "에어서울",
+      "country": "KR",
+      "carrier_type": "LCC",
+      "routes": 1,
+      "website_url": "https://flyairseoul.com/CW/en/main.do",
+      "schedule_url": "https://flyairseoul.com/CW/en/booking_reservation.do"
+    },
+    {
+      "code": "BX",
+      "name": "에어부산",
+      "country": "KR",
+      "carrier_type": "LCC",
+      "routes": 0,
+      "website_url": "https://en.airbusan.com",
+      "schedule_url": "https://en.airbusan.com/content/individual/booking/reserve/booking"
+    },
+    {
+      "code": "ZE",
+      "name": "이스타항공",
+      "country": "KR",
+      "carrier_type": "LCC",
+      "routes": 0,
+      "website_url": "https://www.eastarjet.com",
+      "schedule_url": "https://www.eastarjet.com/newstar/PGWIG00001"
+    },
+    {
+      "code": "NH",
+      "name": "전일본공수 (ANA)",
+      "country": "JP",
+      "carrier_type": "FSC",
+      "routes": 1,
+      "website_url": "https://www.ana.co.jp",
+      "schedule_url": "https://www.ana.co.jp/en/jp/book-plan/airinfo/timetable/international/"
+    },
+    {
+      "code": "JL",
+      "name": "일본항공 (JAL)",
+      "country": "JP",
+      "carrier_type": "FSC",
+      "routes": 1,
+      "website_url": "https://www.jal.co.jp",
+      "schedule_url": "https://www.jal.co.jp/jp/en/inter/route/"
+    },
+    {
+      "code": "MM",
+      "name": "피치항공",
+      "country": "JP",
+      "carrier_type": "LCC",
+      "routes": 1,
+      "website_url": "https://www.flypeach.com/en",
+      "schedule_url": "https://www.flypeach.com/en/lm/st/routemap"
+    },
+    {
+      "code": "GK",
+      "name": "젯스타재팬",
+      "country": "JP",
+      "carrier_type": "LCC",
+      "routes": 0,
+      "website_url": "https://www.jetstar.com/jp/en/home",
+      "schedule_url": "https://www.jetstar.com/jp/en/flights"
+    },
+    {
+      "code": "IJ",
+      "name": "스프링재팬",
+      "country": "JP",
+      "carrier_type": "LCC",
+      "routes": 0,
+      "website_url": "https://jp.ch.com",
+      "schedule_url": "https://jp.ch.com"
+    },
+    {
+      "code": "BC",
+      "name": "스카이마크",
+      "country": "JP",
+      "carrier_type": "LCC",
+      "routes": 0,
+      "website_url": "https://www.skymark.co.jp/en",
+      "schedule_url": "https://www.skymark.co.jp/en/"
+    }
+  ],
+  "changes": [
+    {
+      "type": "NEW_ROUTE",
+      "priority": "high",
+      "emoji": "🆕",
+      "airline": "7C",
+      "airline_name": "제주항공",
+      "route": "ICN → KOJ",
+      "od": "ICN-KOJ",
+      "summary": "제주항공 인천-가고시마 신규 취항 감지. 주 3회 운항 예정.",
+      "detected_at": "2026-03-09T08:40:00+09:00",
+      "time": "20m ago"
+    },
+    {
+      "type": "ROUTE_SUSPENDED",
+      "priority": "high",
+      "emoji": "🚫",
+      "airline": "RS",
+      "airline_name": "에어서울",
+      "route": "ICN → TAK",
+      "od": "ICN-TAK",
+      "summary": "에어서울 인천-다카마쓰 노선 운휴 감지.",
+      "detected_at": "2026-03-09T08:05:00+09:00",
+      "time": "55m ago"
+    },
+    {
+      "type": "FREQ_CHANGE",
+      "priority": "medium",
+      "emoji": "🔄",
+      "airline": "KE",
+      "airline_name": "대한항공",
+      "route": "ICN → NRT",
+      "od": "ICN-NRT",
+      "summary": "대한항공 인천-나리타 노선 주간 운항 빈도 변경.",
+      "detected_at": "2026-03-09T07:15:00+09:00",
+      "time": "1h ago"
+    },
+    {
+      "type": "TIME_CHANGE",
+      "priority": "low",
+      "emoji": "⏰",
+      "airline": "NH",
+      "airline_name": "전일본공수 (ANA)",
+      "route": "HND → GMP",
+      "od": "HND-GMP",
+      "summary": "ANA 하네다-김포 출발 시각 변경.",
+      "detected_at": "2026-03-09T05:50:00+09:00",
+      "time": "3h ago"
+    }
+  ],
+  "routes": [
+    {
+      "airline": "KE",
+      "airline_name": "대한항공",
+      "origin": "ICN",
+      "origin_city": "인천",
+      "destination": "NRT",
+      "destination_city": "도쿄",
+      "flight_number": "KE701/702",
+      "departure_time": "09:20",
+      "arrival_time": "11:40",
+      "frequency_label": "Daily",
+      "status": "ACTIVE"
+    },
+    {
+      "airline": "KE",
+      "airline_name": "대한항공",
+      "origin": "ICN",
+      "origin_city": "인천",
+      "destination": "KIX",
+      "destination_city": "오사카",
+      "flight_number": "KE723/724",
+      "departure_time": "10:00",
+      "arrival_time": "11:50",
+      "frequency_label": "Daily",
+      "status": "ACTIVE"
+    },
+    {
+      "airline": "OZ",
+      "airline_name": "아시아나항공",
+      "origin": "ICN",
+      "origin_city": "인천",
+      "destination": "HND",
+      "destination_city": "도쿄",
+      "flight_number": "OZ178/177",
+      "departure_time": "08:00",
+      "arrival_time": "10:15",
+      "frequency_label": "Daily",
+      "status": "ACTIVE"
+    },
+    {
+      "airline": "7C",
+      "airline_name": "제주항공",
+      "origin": "ICN",
+      "origin_city": "인천",
+      "destination": "KOJ",
+      "destination_city": "가고시마",
+      "flight_number": "7C1901/1902",
+      "departure_time": "11:30",
+      "arrival_time": "13:05",
+      "frequency_label": "3x weekly",
+      "status": "ACTIVE"
+    },
+    {
+      "airline": "TW",
+      "airline_name": "티웨이항공",
+      "origin": "TAE",
+      "origin_city": "대구",
+      "destination": "FUK",
+      "destination_city": "후쿠오카",
+      "flight_number": "TW501/502",
+      "departure_time": "14:00",
+      "arrival_time": "15:20",
+      "frequency_label": "4x weekly",
+      "status": "ACTIVE"
+    },
+    {
+      "airline": "LJ",
+      "airline_name": "진에어",
+      "origin": "ICN",
+      "origin_city": "인천",
+      "destination": "CTS",
+      "destination_city": "삿포로",
+      "flight_number": "LJ201/202",
+      "departure_time": "09:00",
+      "arrival_time": "11:55",
+      "frequency_label": "Seasonal 3x weekly",
+      "status": "SEASONAL"
+    },
+    {
+      "airline": "NH",
+      "airline_name": "전일본공수 (ANA)",
+      "origin": "HND",
+      "origin_city": "도쿄",
+      "destination": "GMP",
+      "destination_city": "서울",
+      "flight_number": "NH863/864",
+      "departure_time": "10:25",
+      "arrival_time": "12:45",
+      "frequency_label": "Daily",
+      "status": "ACTIVE"
+    },
+    {
+      "airline": "JL",
+      "airline_name": "일본항공 (JAL)",
+      "origin": "NRT",
+      "origin_city": "도쿄",
+      "destination": "ICN",
+      "destination_city": "인천",
+      "flight_number": "JL959/960",
+      "departure_time": "10:10",
+      "arrival_time": "12:40",
+      "frequency_label": "Daily",
+      "status": "ACTIVE"
+    },
+    {
+      "airline": "MM",
+      "airline_name": "피치항공",
+      "origin": "KIX",
+      "origin_city": "오사카",
+      "destination": "ICN",
+      "destination_city": "인천",
+      "flight_number": "MM011/012",
+      "departure_time": "09:00",
+      "arrival_time": "10:50",
+      "frequency_label": "10x weekly",
+      "status": "ACTIVE"
+    },
+    {
+      "airline": "RS",
+      "airline_name": "에어서울",
+      "origin": "ICN",
+      "origin_city": "인천",
+      "destination": "TAK",
+      "destination_city": "다카마쓰",
+      "flight_number": "RS511/512",
+      "departure_time": null,
+      "arrival_time": null,
+      "frequency_label": "Suspended",
+      "status": "SUSPENDED"
+    }
+  ],
+  "news": [
+    {
+      "source": "Aviation Wire",
+      "title": "제주항공, 인천-가고시마 노선 개설 계획 보도",
+      "url": "https://example.com/news/jejuair-koj",
+      "related_airline": "7C",
+      "related_route": "ICN-KOJ",
+      "published_at": "2026-03-09T07:30:00+09:00",
+      "time": "1h ago"
+    },
+    {
+      "source": "Traicy",
+      "title": "ANA, 하네다-김포 노선 스케줄 조정",
+      "url": "https://example.com/news/ana-gmp",
+      "related_airline": "NH",
+      "related_route": "HND-GMP",
+      "published_at": "2026-03-09T05:10:00+09:00",
+      "time": "3h ago"
+    },
+    {
+      "source": "연합뉴스",
+      "title": "티웨이항공, 대구-후쿠오카 신규 노선 검토",
+      "url": "https://example.com/news/tway-fuk",
+      "related_airline": "TW",
+      "related_route": "TAE-FUK",
+      "published_at": "2026-03-08T20:00:00+09:00",
+      "time": "13h ago"
+    }
+  ]
+}

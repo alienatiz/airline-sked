@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>airline-sked — 한일 항공 노선 모니터</title>
+<meta name="description" content="한국 ↔ 일본 항공 노선의 신규 취항, 단항, 스케줄 변경을 실시간으로 감지하고 알림을 보내는 오픈소스 프로젝트">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #06090f;
+    --bg-card: #0d1117;
+    --bg-elevated: #161b22;
+    --border: #21262d;
+    --text: #e6edf3;
+    --text-dim: #8b949e;
+    --text-muted: #484f58;
+    --accent: #58a6ff;
+    --accent-glow: rgba(88,166,255,0.15);
+    --cyan: #39d4e0;
+    --green: #3fb950;
+    --red: #f85149;
+    --amber: #d29922;
+    --purple: #bc8cff;
+    --mono: 'DM Mono', monospace;
+    --sans: 'Noto Sans KR', -apple-system, sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  .ambient {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 800px 600px at 20% 10%, rgba(88,166,255,0.06), transparent),
+      radial-gradient(ellipse 600px 500px at 80% 70%, rgba(57,212,224,0.04), transparent);
+  }
+
+  .grid-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      linear-gradient(rgba(88,166,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(88,166,255,0.015) 1px, transparent 1px);
+    background-size: 80px 80px;
+    mask-image: radial-gradient(ellipse 60% 60% at 50% 30%, black, transparent);
+  }
+
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    padding: 0 40px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(6,9,15,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+
+  .nav-icon {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, var(--cyan), var(--accent));
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    box-shadow: 0 0 12px rgba(88,166,255,0.2);
+  }
+
+  .nav-title {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .nav-link {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-dim);
+    text-decoration: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+
+  .nav-link:hover {
+    color: var(--text);
+    background: var(--bg-elevated);
+  }
+
+  .nav-link.primary {
+    color: var(--bg);
+    background: var(--accent);
+    font-weight: 500;
+  }
+
+  .nav-link.primary:hover {
+    background: #79b8ff;
+  }
+
+  .hero {
+    position: relative;
+    z-index: 1;
+    padding: 160px 40px 100px;
+    max-width: 960px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--cyan);
+    background: rgba(57,212,224,0.08);
+    border: 1px solid rgba(57,212,224,0.15);
+    padding: 5px 14px;
+    border-radius: 100px;
+    margin-bottom: 28px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .hero h1 {
+    font-size: clamp(36px, 5.5vw, 60px);
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: -1.5px;
+    margin-bottom: 20px;
+    animation: fadeUp 0.6s ease 0.1s both;
+  }
+
+  .hero h1 .gradient {
+    background: linear-gradient(135deg, var(--accent), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero-desc {
+    font-size: 17px;
+    color: var(--text-dim);
+    max-width: 600px;
+    margin: 0 auto 40px;
+    line-height: 1.7;
+    animation: fadeUp 0.6s ease 0.2s both;
+  }
+
+  .hero-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    animation: fadeUp 0.6s ease 0.3s both;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.25s;
+    border: 1px solid transparent;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+    box-shadow: 0 0 24px rgba(88,166,255,0.2);
+  }
+
+  .btn-primary:hover {
+    background: #79b8ff;
+    box-shadow: 0 0 32px rgba(88,166,255,0.3);
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    background: var(--bg-elevated);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-secondary:hover {
+    background: #1f2937;
+    border-color: var(--text-muted);
+    transform: translateY(-1px);
+  }
+
+  .route-visual {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto 80px;
+    padding: 0 40px;
+    animation: fadeUp 0.8s ease 0.4s both;
+  }
+
+  .route-visual-inner {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.4), 0 0 0 1px rgba(88,166,255,0.05);
+  }
+
+  .route-visual-bar {
+    height: 40px;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 8px;
+  }
+
+  .dot { width:10px; height:10px; border-radius:50%; }
+  .dot-r { background: #f85149; }
+  .dot-y { background: #d29922; }
+  .dot-g { background: #3fb950; }
+
+  .route-visual-bar span {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-left: 12px;
+  }
+
+  .route-visual-content {
+    padding: 24px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 2;
+    color: var(--text-dim);
+  }
+
+  .rv-line { display: flex; gap: 10px; align-items: center; }
+  .rv-prompt { color: var(--cyan); user-select: none; }
+  .rv-cmd { color: var(--text); }
+  .rv-out { color: var(--green); }
+  .rv-warn { color: var(--amber); }
+  .rv-err { color: var(--red); }
+  .rv-dim { color: var(--text-muted); }
+
+  .typing-cursor {
+    display: inline-block;
+    width: 8px;
+    height: 16px;
+    background: var(--accent);
+    margin-left: 2px;
+    animation: blink 1s step-end infinite;
+    vertical-align: text-bottom;
+  }
+
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .features {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 40px 100px;
+  }
+
+  .features-heading {
+    text-align: center;
+    margin-bottom: 60px;
+  }
+
+  .features-heading h2 {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 12px;
+  }
+
+  .features-heading p {
+    color: var(--text-dim);
+    font-size: 15px;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .feature-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 24px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .feature-card:hover {
+    border-color: rgba(88,166,255,0.2);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  }
+
+  .feature-card:hover::before { opacity: 1; }
+
+  .feature-icon {
+    font-size: 28px;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .feature-card h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .feature-card p {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  .targets {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 40px 100px;
+  }
+
+  .targets h2 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .targets-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  .target-group {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .target-group-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  .target-flag {
+    font-size: 20px;
+  }
+
+  .target-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 20px;
+  }
+
+  .target-tag {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    transition: all 0.15s;
+  }
+
+  .target-tag:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .target-tag.airline {
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .stack {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 40px 100px;
+  }
+
+  .stack h2 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .stack-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .stack-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    transition: all 0.2s;
+  }
+
+  .stack-item:hover {
+    border-color: var(--text-muted);
+    background: var(--bg-elevated);
+  }
+
+  .stack-label {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    min-width: 80px;
+  }
+
+  .stack-value {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 40px;
+    text-align: center;
+  }
+
+  footer p {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  footer a:hover { text-decoration: underline; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-section {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .fade-section.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (max-width: 768px) {
+    nav { padding: 0 20px; }
+    .hero { padding: 120px 20px 60px; }
+    .features-grid { grid-template-columns: 1fr; }
+    .targets-columns { grid-template-columns: 1fr; }
+    .stack-grid { grid-template-columns: 1fr; }
+    .route-visual { padding: 0 20px; }
+    .features, .targets, .stack { padding-left: 20px; padding-right: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ambient"></div>
+<div class="grid-overlay"></div>
+
+<nav>
+  <a href="./" class="nav-logo">
+    <div class="nav-icon">✈</div>
+    <span class="nav-title">airline-sked</span>
+  </a>
+  <div class="nav-links">
+    <a href="#features" class="nav-link">기능</a>
+    <a href="#targets" class="nav-link">대상</a>
+    <a href="#stack" class="nav-link">기술스택</a>
+    <a href="https://github.com/YOUR_USERNAME/airline-sked" class="nav-link" target="_blank">GitHub</a>
+    <a href="./dashboard.html" class="nav-link primary">대시보드 →</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-badge">🛫 Open Source · KR ↔ JP Route Intelligence</div>
+  <h1>
+    한일 항공노선<br>
+    <span class="gradient">변경을 놓치지 마세요</span>
+  </h1>
+  <p class="hero-desc">
+    신규 취항, 단항, 스케줄 변경을 자동으로 감지하고<br>
+    Telegram · Discord · 웹으로 실시간 알림을 보내는 오픈소스 모니터링 시스템
+  </p>
+  <div class="hero-actions">
+    <a href="./dashboard.html" class="btn btn-primary">📊 대시보드 보기</a>
+    <a href="https://github.com/YOUR_USERNAME/airline-sked" class="btn btn-secondary" target="_blank">⭐ GitHub</a>
+  </div>
+</section>
+
+<div class="route-visual">
+  <div class="route-visual-inner">
+    <div class="route-visual-bar">
+      <div class="dot dot-r"></div>
+      <div class="dot dot-y"></div>
+      <div class="dot dot-g"></div>
+      <span>airline-sked — Terminal</span>
+    </div>
+    <div class="route-visual-content" id="terminal"></div>
+  </div>
+</div>
+
+<section class="features fade-section" id="features">
+  <div class="features-heading">
+    <h2>핵심 기능</h2>
+    <p>한-일 노선에 특화된 모니터링 파이프라인</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <span class="feature-icon">🔍</span>
+      <h3>자동 스케줄 수집</h3>
+      <p>14개 항공사 공식 사이트에서 스케줄을 주기적으로 수집. 공항공사 데이터와 교차 검증.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">⚡</span>
+      <h3>변경 감지 엔진</h3>
+      <p>신규 취항, 단항/운휴, 빈도 변경, 시간 변경, 기재 변경, 시즌 스케줄까지 8종 이벤트 감지.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🔔</span>
+      <h3>멀티채널 알림</h3>
+      <p>Telegram Bot, Discord Bot으로 실시간 알림. 항공사·노선별 구독 필터링 지원.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">📊</span>
+      <h3>웹 대시보드</h3>
+      <p>전체 노선 현황, 변경 타임라인, 항공사별 필터링을 한눈에 볼 수 있는 대시보드.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🗄️</span>
+      <h3>히스토리 추적</h3>
+      <p>모든 변경 이벤트를 DB에 기록. 계절별 패턴 분석, 노선 이력 조회 가능.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🔧</span>
+      <h3>CLI 도구</h3>
+      <p>커맨드라인으로 수집·감지·알림을 제어. 자동화 스크립트와 쉽게 연동.</p>
+    </div>
+  </div>
+</section>
+
+<section class="targets fade-section" id="targets">
+  <h2>모니터링 대상</h2>
+  <div class="targets-columns">
+    <div class="target-group">
+      <div class="target-group-header">
+        <span class="target-flag">🇰🇷</span> 한국 항공사 · 출발 공항
+      </div>
+      <div class="target-list">
+        <span class="target-tag airline">KE 대한항공</span>
+        <span class="target-tag airline">OZ 아시아나</span>
+        <span class="target-tag airline">7C 제주항공</span>
+        <span class="target-tag airline">LJ 진에어</span>
+        <span class="target-tag airline">TW 티웨이</span>
+        <span class="target-tag airline">RS 에어서울</span>
+        <span class="target-tag airline">BX 에어부산</span>
+        <span class="target-tag airline">ZE 이스타</span>
+      </div>
+      <div class="target-list" style="border-top:1px solid var(--border); padding-top:16px;">
+        <span class="target-tag">ICN 인천</span>
+        <span class="target-tag">GMP 김포</span>
+        <span class="target-tag">PUS 부산</span>
+        <span class="target-tag">CJU 제주</span>
+        <span class="target-tag">TAE 대구</span>
+        <span class="target-tag">CJJ 청주</span>
+        <span class="target-tag">MWX 무안</span>
+      </div>
+    </div>
+    <div class="target-group">
+      <div class="target-group-header">
+        <span class="target-flag">🇯🇵</span> 일본 항공사 · 도착 공항
+      </div>
+      <div class="target-list">
+        <span class="target-tag airline">NH ANA</span>
+        <span class="target-tag airline">JL JAL</span>
+        <span class="target-tag airline">MM 피치</span>
+        <span class="target-tag airline">GK 젯스타JP</span>
+        <span class="target-tag airline">IJ 스프링JP</span>
+        <span class="target-tag airline">BC 스카이마크</span>
+      </div>
+      <div class="target-list" style="border-top:1px solid var(--border); padding-top:16px;">
+        <span class="target-tag">NRT 나리타</span>
+        <span class="target-tag">HND 하네다</span>
+        <span class="target-tag">KIX 간사이</span>
+        <span class="target-tag">FUK 후쿠오카</span>
+        <span class="target-tag">NGO 주부</span>
+        <span class="target-tag">CTS 삿포로</span>
+        <span class="target-tag">OKA 오키나와</span>
+        <span class="target-tag">KOJ 가고시마</span>
+        <span class="target-tag">OIT 오이타</span>
+        <span class="target-tag">KMJ 구마모토</span>
+        <span class="target-tag">HIJ 히로시마</span>
+        <span class="target-tag">SDJ 센다이</span>
+        <span class="target-tag">NGS 나가사키</span>
+        <span class="target-tag">FSZ 시즈오카</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="stack fade-section" id="stack">
+  <h2>기술 스택</h2>
+  <div class="stack-grid">
+    <div class="stack-item">
+      <span class="stack-label">Backend</span>
+      <span class="stack-value">Python 3.11 + FastAPI</span>
+    </div>
+    <div class="stack-item">
+      <span class="stack-label">Database</span>
+      <span class="stack-value">SQLite + SQLModel</span>
+    </div>
+    <div class="stack-item">
+      <span class="stack-label">Scraping</span>
+      <span class="stack-value">httpx + Playwright</span>
+    </div>
+    <div class="stack-item">
+      <span class="stack-label">Scheduler</span>
+      <span class="stack-value">APScheduler</span>
+    </div>
+    <div class="stack-item">
+      <span class="stack-label">Notify</span>
+      <span class="stack-value">Telegram · Discord</span>
+    </div>
+    <div class="stack-item">
+      <span class="stack-label">Frontend</span>
+      <span class="stack-value">Vanilla HTML/JS</span>
+    </div>
+    <div class="stack-item">
+      <span class="stack-label">Deploy</span>
+      <span class="stack-value">GitHub Pages</span>
+    </div>
+    <div class="stack-item">
+      <span class="stack-label">License</span>
+      <span class="stack-value">MIT</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>
+    airline-sked — Made with ✈ ·
+    <a href="https://github.com/YOUR_USERNAME/airline-sked" target="_blank">GitHub</a>
+  </p>
+</footer>
+
+<script>
+const lines = [
+  { type: 'cmd', text: '$ airline-sked scrape --all' },
+  { type: 'out', text: '▶ 14개 항공사 스케줄 수집 시작...' },
+  { type: 'dim', text: '  [KE] 대한항공 ········ 18 routes collected' },
+  { type: 'dim', text: '  [OZ] 아시아나 ······· 14 routes collected' },
+  { type: 'dim', text: '  [7C] 제주항공 ······· 12 routes collected' },
+  { type: 'dim', text: '  [NH] ANA ············ 9 routes collected' },
+  { type: 'dim', text: '  [JL] JAL ············ 8 routes collected' },
+  { type: 'dim', text: '  ... +9 airlines' },
+  { type: 'out', text: '✓ 수집 완료: 117 routes from 14 airlines' },
+  { type: 'blank', text: '' },
+  { type: 'cmd', text: '$ airline-sked diff' },
+  { type: 'out', text: '▶ 변경 감지 실행...' },
+  { type: 'err', text: '🆕 [HIGH] NEW_ROUTE      7C ICN→KOJ (가고시마) 주3회' },
+  { type: 'err', text: '🚫 [HIGH] SUSPENDED      RS ICN→TAK (다카마쓰) 운휴' },
+  { type: 'warn', text: '🔄 [MED]  FREQ_CHANGE   KE ICN→NRT 주14→주21' },
+  { type: 'warn', text: '🔄 [MED]  FREQ_CHANGE   MM KIX→ICN 주7→주10' },
+  { type: 'out', text: '✓ 4건 감지 → Telegram/Discord 알림 발송 완료' },
+];
+
+function renderTerminal() {
+  const el = document.getElementById('terminal');
+  let html = '';
+  lines.forEach((line, i) => {
+    setTimeout(() => {
+      if (line.type === 'blank') {
+        el.innerHTML += '<div>&nbsp;</div>';
+      } else if (line.type === 'cmd') {
+        el.innerHTML += `<div class="rv-line"><span class="rv-cmd">${line.text}</span></div>`;
+      } else {
+        el.innerHTML += `<div class="rv-line"><span class="rv-${line.type}">${line.text}</span></div>`;
+      }
+      el.scrollTop = el.scrollHeight;
+      if (i === lines.length - 1) {
+        el.innerHTML += `<div class="rv-line"><span class="rv-prompt">$</span> <span class="typing-cursor"></span></div>`;
+      }
+    }, 200 + i * 180);
+  });
+}
+
+function initScrollReveal() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.fade-section').forEach(el => observer.observe(el));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderTerminal();
+  initScrollReveal();
+});
+</script>
+</body>
+</html>

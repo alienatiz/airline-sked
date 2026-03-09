@@ -1,0 +1,170 @@
+{
+  "generated_at": "2026-03-09T09:00:00+09:00",
+  "source_mode": "seed",
+  "changes": [
+    {
+      "type": "NEW_ROUTE",
+      "priority": "HIGH",
+      "airline": "7C",
+      "origin": "ICN",
+      "destination": "KOJ",
+      "summary": "제주항공 인천-가고시마 신규 취항 감지. 주 3회 운항 예정.",
+      "detected_at": "2026-03-09T08:40:00+09:00"
+    },
+    {
+      "type": "ROUTE_SUSPENDED",
+      "priority": "HIGH",
+      "airline": "RS",
+      "origin": "ICN",
+      "destination": "TAK",
+      "summary": "에어서울 인천-다카마쓰 노선 운휴 감지.",
+      "detected_at": "2026-03-09T08:05:00+09:00"
+    },
+    {
+      "type": "FREQ_CHANGE",
+      "priority": "MEDIUM",
+      "airline": "KE",
+      "origin": "ICN",
+      "destination": "NRT",
+      "summary": "대한항공 인천-나리타 노선 주간 운항 빈도 변경.",
+      "detected_at": "2026-03-09T07:15:00+09:00"
+    },
+    {
+      "type": "TIME_CHANGE",
+      "priority": "LOW",
+      "airline": "NH",
+      "origin": "HND",
+      "destination": "GMP",
+      "summary": "ANA 하네다-김포 출발 시각 변경.",
+      "detected_at": "2026-03-09T05:50:00+09:00"
+    }
+  ],
+  "routes": [
+    {
+      "airline": "KE",
+      "origin": "ICN",
+      "destination": "NRT",
+      "flight_number": "KE701/702",
+      "departure_time": "09:20",
+      "arrival_time": "11:40",
+      "frequency_label": "Daily",
+      "status": "ACTIVE"
+    },
+    {
+      "airline": "KE",
+      "origin": "ICN",
+      "destination": "KIX",
+      "flight_number": "KE723/724",
+      "departure_time": "10:00",
+      "arrival_time": "11:50",
+      "frequency_label": "Daily",
+      "status": "ACTIVE"
+    },
+    {
+      "airline": "OZ",
+      "origin": "ICN",
+      "destination": "HND",
+      "flight_number": "OZ178/177",
+      "departure_time": "08:00",
+      "arrival_time": "10:15",
+      "frequency_label": "Daily",
+      "status": "ACTIVE"
+    },
+    {
+      "airline": "7C",
+      "origin": "ICN",
+      "destination": "KOJ",
+      "flight_number": "7C1901/1902",
+      "departure_time": "11:30",
+      "arrival_time": "13:05",
+      "frequency_label": "3x weekly",
+      "status": "ACTIVE"
+    },
+    {
+      "airline": "TW",
+      "origin": "TAE",
+      "destination": "FUK",
+      "flight_number": "TW501/502",
+      "departure_time": "14:00",
+      "arrival_time": "15:20",
+      "frequency_label": "4x weekly",
+      "status": "ACTIVE"
+    },
+    {
+      "airline": "LJ",
+      "origin": "ICN",
+      "destination": "CTS",
+      "flight_number": "LJ201/202",
+      "departure_time": "09:00",
+      "arrival_time": "11:55",
+      "frequency_label": "Seasonal 3x weekly",
+      "status": "SEASONAL"
+    },
+    {
+      "airline": "NH",
+      "origin": "HND",
+      "destination": "GMP",
+      "flight_number": "NH863/864",
+      "departure_time": "10:25",
+      "arrival_time": "12:45",
+      "frequency_label": "Daily",
+      "status": "ACTIVE"
+    },
+    {
+      "airline": "JL",
+      "origin": "NRT",
+      "destination": "ICN",
+      "flight_number": "JL959/960",
+      "departure_time": "10:10",
+      "arrival_time": "12:40",
+      "frequency_label": "Daily",
+      "status": "ACTIVE"
+    },
+    {
+      "airline": "MM",
+      "origin": "KIX",
+      "destination": "ICN",
+      "flight_number": "MM011/012",
+      "departure_time": "09:00",
+      "arrival_time": "10:50",
+      "frequency_label": "10x weekly",
+      "status": "ACTIVE"
+    },
+    {
+      "airline": "RS",
+      "origin": "ICN",
+      "destination": "TAK",
+      "flight_number": "RS511/512",
+      "departure_time": null,
+      "arrival_time": null,
+      "frequency_label": "Suspended",
+      "status": "SUSPENDED"
+    }
+  ],
+  "news": [
+    {
+      "source": "Aviation Wire",
+      "title": "제주항공, 인천-가고시마 노선 개설 계획 보도",
+      "url": "https://example.com/news/jejuair-koj",
+      "related_airline": "7C",
+      "related_route": "ICN-KOJ",
+      "published_at": "2026-03-09T07:30:00+09:00"
+    },
+    {
+      "source": "Traicy",
+      "title": "ANA, 하네다-김포 노선 스케줄 조정",
+      "url": "https://example.com/news/ana-gmp",
+      "related_airline": "NH",
+      "related_route": "HND-GMP",
+      "published_at": "2026-03-09T05:10:00+09:00"
+    },
+    {
+      "source": "연합뉴스",
+      "title": "티웨이항공, 대구-후쿠오카 신규 노선 검토",
+      "url": "https://example.com/news/tway-fuk",
+      "related_airline": "TW",
+      "related_route": "TAE-FUK",
+      "published_at": "2026-03-08T20:00:00+09:00"
+    }
+  ]
+}

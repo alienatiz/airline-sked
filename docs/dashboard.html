@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>airline-sked — 한일 노선 모니터</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #0a0e17;
+    --bg-card: #111827;
+    --bg-card-hover: #1a2332;
+    --bg-elevated: #1e293b;
+    --border: #1e3a5f;
+    --border-subtle: #162033;
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-blue: #38bdf8;
+    --accent-cyan: #22d3ee;
+    --accent-green: #4ade80;
+    --accent-red: #f87171;
+    --accent-amber: #fbbf24;
+    --accent-purple: #a78bfa;
+    --high: #ef4444;
+    --medium: #f59e0b;
+    --low: #06b6d4;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Noto Sans KR', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      linear-gradient(rgba(56,189,248,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(56,189,248,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(56,189,248,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(34,211,238,0.04) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .header {
+    position: relative;
+    z-index: 1;
+    padding: 24px 32px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    backdrop-filter: blur(20px);
+    background: rgba(10,14,23,0.8);
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: var(--bg-primary);
+    box-shadow: 0 0 20px rgba(56,189,248,0.2);
+  }
+
+  .header-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(74,222,128,0.4); }
+    50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(74,222,128,0); }
+  }
+
+  .main {
+    position: relative;
+    z-index: 1;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 24px 32px;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+  }
+
+  .stat-card:nth-child(1)::before { background: linear-gradient(90deg, var(--accent-blue), transparent); }
+  .stat-card:nth-child(2)::before { background: linear-gradient(90deg, var(--accent-green), transparent); }
+  .stat-card:nth-child(3)::before { background: linear-gradient(90deg, var(--high), transparent); }
+  .stat-card:nth-child(4)::before { background: linear-gradient(90deg, var(--accent-amber), transparent); }
+  .stat-card:nth-child(5)::before { background: linear-gradient(90deg, var(--accent-purple), transparent); }
+
+  .stat-card:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border);
+    transform: translateY(-2px);
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  .stat-sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    font-family: var(--mono);
+  }
+
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 24px;
+  }
+
+  .section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .section-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .section-title {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 100px;
+    background: rgba(56,189,248,0.1);
+    color: var(--accent-blue);
+    border: 1px solid rgba(56,189,248,0.2);
+  }
+
+  .changes-feed {
+    max-height: 520px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .change-item {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    position: relative;
+  }
+
+  .change-item:hover {
+    background: var(--bg-card-hover);
+  }
+
+  .change-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+  }
+
+  .change-item.high::before { background: var(--high); }
+  .change-item.medium::before { background: var(--medium); }
+  .change-item.low::before { background: var(--low); }
+
+  .change-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .change-emoji { font-size: 16px; }
+
+  .change-type {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .change-type.high { background: rgba(239,68,68,0.15); color: var(--high); }
+  .change-type.medium { background: rgba(245,158,11,0.15); color: var(--medium); }
+  .change-type.low { background: rgba(6,182,212,0.15); color: var(--low); }
+
+  .change-route {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .change-airline {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .change-time {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-left: auto;
+  }
+
+  .change-summary {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .routes-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .routes-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  .routes-table th {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    padding: 12px 16px;
+    text-align: left;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .routes-table td {
+    padding: 12px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border-subtle);
+    vertical-align: middle;
+  }
+
+  .routes-table tbody tr {
+    transition: background 0.15s ease;
+  }
+
+  .routes-table tbody tr:hover {
+    background: var(--bg-card-hover);
+  }
+
+  .route-code {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--accent-cyan);
+  }
+
+  .route-od {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .route-arrow {
+    color: var(--text-muted);
+    margin: 0 4px;
+  }
+
+  .status-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .status-active {
+    background: rgba(74,222,128,0.1);
+    color: var(--accent-green);
+    border: 1px solid rgba(74,222,128,0.2);
+  }
+
+  .status-suspended {
+    background: rgba(239,68,68,0.1);
+    color: var(--high);
+    border: 1px solid rgba(239,68,68,0.2);
+  }
+
+  .status-seasonal {
+    background: rgba(251,191,36,0.1);
+    color: var(--accent-amber);
+    border: 1px solid rgba(251,191,36,0.2);
+  }
+
+  .freq-badge {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .sidebar-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .airline-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border-subtle);
+  }
+
+  .airline-item {
+    background: var(--bg-card);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.15s;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .airline-item:hover { background: var(--bg-card-hover); }
+
+  .airline-code {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 700;
+    min-width: 28px;
+  }
+
+  .airline-code.kr { color: var(--accent-blue); }
+  .airline-code.jp { color: var(--accent-red); }
+
+  .airline-name {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .airline-count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-left: auto;
+  }
+
+  .filter-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 0 20px;
+  }
+
+  .filter-tab {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .filter-tab:hover { color: var(--text-secondary); background: var(--bg-elevated); }
+  .filter-tab.active { color: var(--accent-cyan); background: rgba(56,189,248,0.1); }
+
+  .news-item {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    cursor: pointer;
+    transition: background 0.15s;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .news-item:hover { background: var(--bg-card-hover); }
+
+  .news-source {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent-purple);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .news-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.4;
+    margin-bottom: 4px;
+  }
+
+  .news-time {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .scroll-area {
+    max-height: 320px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .stat-card { animation: slideIn 0.4s ease both; }
+  .stat-card:nth-child(1) { animation-delay: 0.05s; }
+  .stat-card:nth-child(2) { animation-delay: 0.1s; }
+  .stat-card:nth-child(3) { animation-delay: 0.15s; }
+  .stat-card:nth-child(4) { animation-delay: 0.2s; }
+  .stat-card:nth-child(5) { animation-delay: 0.25s; }
+
+  .section { animation: slideIn 0.5s ease both; animation-delay: 0.3s; }
+
+  .change-item {
+    animation: slideIn 0.3s ease both;
+  }
+
+  @media (max-width: 1024px) {
+    .stats-row { grid-template-columns: repeat(3, 1fr); }
+    .content-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .header { padding: 16px; }
+    .main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <div class="logo-icon">✈</div>
+    <div>
+      <div class="logo">airline-sked</div>
+      <div style="font-size:11px; color:var(--text-muted); font-family:var(--mono);">KR ↔ JP Route Monitor</div>
+    </div>
+  </div>
+  <div class="header-status">
+    <div class="status-dot"></div>
+    <span id="statusLabel">SNAPSHOT</span>
+    <span style="margin-left:12px;">Last scan: <span id="lastScan">—</span></span>
+  </div>
+</header>
+
+<main class="main">
+  <div class="stats-row" id="statsRow"></div>
+
+  <div class="content-grid">
+    <div style="display:flex; flex-direction:column; gap:24px;">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">
+            📡 최근 변경 감지
+            <span class="section-badge" id="changeCount">0</span>
+          </div>
+          <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all" onclick="filterChanges(this)">ALL</button>
+            <button class="filter-tab" data-filter="high" onclick="filterChanges(this)">HIGH</button>
+            <button class="filter-tab" data-filter="medium" onclick="filterChanges(this)">MED</button>
+            <button class="filter-tab" data-filter="low" onclick="filterChanges(this)">LOW</button>
+          </div>
+        </div>
+        <div class="changes-feed" id="changesFeed"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">
+            🗺️ 모니터링 노선
+            <span class="section-badge" id="routeCount">0</span>
+          </div>
+        </div>
+        <div class="scroll-area" style="max-height:400px;">
+          <table class="routes-table">
+            <thead>
+              <tr>
+                <th>항공사</th>
+                <th>노선</th>
+                <th>편명</th>
+                <th>운항</th>
+                <th>빈도</th>
+                <th>상태</th>
+              </tr>
+            </thead>
+            <tbody id="routesBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-stack">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">🏢 항공사</div>
+          <span class="section-badge" id="airlineCount">0</span>
+        </div>
+        <div class="airline-grid" id="airlineGrid"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">📰 관련 뉴스</div>
+        </div>
+        <div class="scroll-area" id="newsFeed"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="./assets/dashboard.js"></script>
+</body>
+</html>
