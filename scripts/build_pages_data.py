@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -12,6 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
 DOCS_DATA_DIR = ROOT / "docs" / "data"
+DB_FILE = DATA_DIR / "airline_sked.db"
 
 AIRLINES_FILE = DATA_DIR / "airlines.json"
 AIRPORTS_FILE = DATA_DIR / "airports.json"
@@ -79,6 +81,202 @@ def pick_related_news(
     return None
 
 
+def build_route_payload(
+    *,
+    airline_code: str,
+    origin_code: str,
+    destination_code: str,
+    flight_number: str | None,
+    departure_time: str | None,
+    arrival_time: str | None,
+    frequency_label: str,
+    status: str,
+    aircraft_type: str | None,
+    airline_map: dict[str, dict],
+    airport_map: dict[str, dict],
+) -> dict:
+    airline = airline_map.get(airline_code, {"name_ko": airline_code})
+    origin = airport_map.get(origin_code, {"city_ko": origin_code, "name_ko": origin_code})
+    destination = airport_map.get(destination_code, {"city_ko": destination_code, "name_ko": destination_code})
+    return {
+        "airline": airline_code,
+        "airline_name": airline["name_ko"],
+        "origin": origin_code,
+        "origin_city": origin["city_ko"] or origin["name_ko"],
+        "destination": destination_code,
+        "destination_city": destination["city_ko"] or destination["name_ko"],
+        "flight_number": flight_number,
+        "departure_time": departure_time,
+        "arrival_time": arrival_time,
+        "frequency_label": frequency_label,
+        "status": status,
+        "aircraft_type": aircraft_type,
+    }
+
+
+def build_seed_routes(
+    seed_routes: list[dict],
+    airline_map: dict[str, dict],
+    airport_map: dict[str, dict],
+) -> list[dict]:
+    routes: list[dict] = []
+    for item in seed_routes:
+        routes.append(
+            build_route_payload(
+                airline_code=item["airline"],
+                origin_code=item["origin"],
+                destination_code=item["destination"],
+                flight_number=item.get("flight_number"),
+                departure_time=item.get("departure_time"),
+                arrival_time=item.get("arrival_time"),
+                frequency_label=item["frequency_label"],
+                status=item["status"],
+                aircraft_type=item.get("aircraft_type"),
+                airline_map=airline_map,
+                airport_map=airport_map,
+            )
+        )
+    return routes
+
+
+def has_required_tables(connection: sqlite3.Connection) -> bool:
+    cursor = connection.cursor()
+    cursor.execute(
+        """
+        SELECT name
+        FROM sqlite_master
+        WHERE type = 'table' AND name IN ('routes', 'schedules')
+        """
+    )
+    return {row[0] for row in cursor.fetchall()} == {"routes", "schedules"}
+
+
+def is_placeholder_flight_number(
+    flight_number: str | None,
+    airline_code: str,
+    origin_code: str,
+    destination_code: str,
+) -> bool:
+    if not flight_number:
+        return False
+    return flight_number == f"{airline_code}-{origin_code}-{destination_code}"
+
+
+def format_frequency_label(
+    *,
+    status: str,
+    frequency_weekly: int | None,
+    days_of_week: str | None,
+) -> str:
+    if status == "SUSPENDED":
+        return "Suspended"
+
+    weekly = frequency_weekly
+    if weekly is None and days_of_week:
+        weekly = len([day for day in days_of_week.split(",") if day.strip()])
+
+    if weekly == 7:
+        base = "Daily"
+    elif weekly:
+        base = f"{weekly}x weekly"
+    else:
+        base = "TBD"
+
+    if status == "SEASONAL":
+        return base if base == "TBD" else f"Seasonal {base}"
+    return base
+
+
+def load_database_routes(
+    airline_map: dict[str, dict],
+    airport_map: dict[str, dict],
+) -> tuple[list[dict], datetime | None]:
+    if not DB_FILE.exists():
+        return [], None
+
+    connection = sqlite3.connect(DB_FILE)
+    connection.row_factory = sqlite3.Row
+
+    try:
+        if not has_required_tables(connection):
+            return [], None
+
+        cursor = connection.cursor()
+        cursor.execute("SELECT MAX(collected_at) FROM schedules")
+        latest_collected_at = cursor.fetchone()[0]
+        if not latest_collected_at:
+            return [], None
+
+        cursor.execute(
+            """
+            SELECT
+                r.airline_code AS airline_code,
+                r.origin AS origin_code,
+                r.destination AS destination_code,
+                r.status AS route_status,
+                s.flight_number AS flight_number,
+                s.departure_time AS departure_time,
+                s.arrival_time AS arrival_time,
+                s.aircraft_type AS aircraft_type,
+                s.frequency_weekly AS frequency_weekly,
+                s.days_of_week AS days_of_week
+            FROM routes AS r
+            LEFT JOIN schedules AS s
+              ON s.id = (
+                SELECT s2.id
+                FROM schedules AS s2
+                WHERE s2.route_id = r.id
+                ORDER BY s2.collected_at DESC, s2.id DESC
+                LIMIT 1
+              )
+            ORDER BY
+              CASE r.status
+                WHEN 'ACTIVE' THEN 0
+                WHEN 'SEASONAL' THEN 1
+                ELSE 2
+              END,
+              r.airline_code,
+              r.origin,
+              r.destination
+            """
+        )
+
+        routes: list[dict] = []
+        for row in cursor.fetchall():
+            flight_number = row["flight_number"]
+            if is_placeholder_flight_number(
+                flight_number,
+                row["airline_code"],
+                row["origin_code"],
+                row["destination_code"],
+            ):
+                flight_number = None
+
+            routes.append(
+                build_route_payload(
+                    airline_code=row["airline_code"],
+                    origin_code=row["origin_code"],
+                    destination_code=row["destination_code"],
+                    flight_number=flight_number,
+                    departure_time=row["departure_time"],
+                    arrival_time=row["arrival_time"],
+                    frequency_label=format_frequency_label(
+                        status=row["route_status"],
+                        frequency_weekly=row["frequency_weekly"],
+                        days_of_week=row["days_of_week"],
+                    ),
+                    status=row["route_status"],
+                    aircraft_type=row["aircraft_type"],
+                    airline_map=airline_map,
+                    airport_map=airport_map,
+                )
+            )
+
+        return routes, datetime.fromisoformat(latest_collected_at)
+    finally:
+        connection.close()
+
+
 def main() -> None:
     airlines = load_json(AIRLINES_FILE)
     airports = load_json(AIRPORTS_FILE)
@@ -89,32 +287,17 @@ def main() -> None:
 
     generated_at = seed.get("generated_at") or datetime.now().astimezone().isoformat(timespec="seconds")
     generated_dt = datetime.fromisoformat(generated_at)
+    routes = build_seed_routes(seed["routes"], airline_map, airport_map)
+    source_mode = seed.get("source_mode", "seed")
 
-    routes = []
-    route_counter = Counter()
-    active_routes = 0
-    for item in seed["routes"]:
-        airline = airline_map[item["airline"]]
-        origin = airport_map[item["origin"]]
-        destination = airport_map[item["destination"]]
-        route_counter[item["airline"]] += 1
-        if item["status"] == "ACTIVE":
-            active_routes += 1
-        routes.append(
-            {
-                "airline": item["airline"],
-                "airline_name": airline["name_ko"],
-                "origin": item["origin"],
-                "origin_city": origin["city_ko"] or origin["name_ko"],
-                "destination": item["destination"],
-                "destination_city": destination["city_ko"] or destination["name_ko"],
-                "flight_number": item["flight_number"],
-                "departure_time": item["departure_time"],
-                "arrival_time": item["arrival_time"],
-                "frequency_label": item["frequency_label"],
-                "status": item["status"],
-            }
-        )
+    database_routes, database_generated_dt = load_database_routes(airline_map, airport_map)
+    if database_routes:
+        routes = database_routes
+        source_mode = "database"
+        generated_dt = database_generated_dt or generated_dt
+
+    route_counter = Counter(route["airline"] for route in routes)
+    active_routes = sum(1 for route in routes if route["status"] == "ACTIVE")
 
     changes = []
     high_changes = 0
@@ -196,7 +379,7 @@ def main() -> None:
 
     payload = {
         "generated_at": generated_dt.isoformat(timespec="seconds"),
-        "source_mode": seed.get("source_mode", "seed"),
+        "source_mode": source_mode,
         "summary": {
             "total_routes": len(routes),
             "active_routes": active_routes,

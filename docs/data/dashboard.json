@@ -259,7 +259,8 @@
       "departure_time": "09:20",
       "arrival_time": "11:40",
       "frequency_label": "Daily",
-      "status": "ACTIVE"
+      "status": "ACTIVE",
+      "aircraft_type": null
     },
     {
       "airline": "KE",
@@ -272,7 +273,8 @@
       "departure_time": "10:00",
       "arrival_time": "11:50",
       "frequency_label": "Daily",
-      "status": "ACTIVE"
+      "status": "ACTIVE",
+      "aircraft_type": null
     },
     {
       "airline": "OZ",
@@ -285,7 +287,8 @@
       "departure_time": "08:00",
       "arrival_time": "10:15",
       "frequency_label": "Daily",
-      "status": "ACTIVE"
+      "status": "ACTIVE",
+      "aircraft_type": null
     },
     {
       "airline": "7C",
@@ -298,7 +301,8 @@
       "departure_time": "11:30",
       "arrival_time": "13:05",
       "frequency_label": "3x weekly",
-      "status": "ACTIVE"
+      "status": "ACTIVE",
+      "aircraft_type": null
     },
     {
       "airline": "TW",
@@ -311,7 +315,8 @@
       "departure_time": "14:00",
       "arrival_time": "15:20",
       "frequency_label": "4x weekly",
-      "status": "ACTIVE"
+      "status": "ACTIVE",
+      "aircraft_type": null
     },
     {
       "airline": "LJ",
@@ -324,7 +329,8 @@
       "departure_time": "09:00",
       "arrival_time": "11:55",
       "frequency_label": "Seasonal 3x weekly",
-      "status": "SEASONAL"
+      "status": "SEASONAL",
+      "aircraft_type": null
     },
     {
       "airline": "NH",
@@ -337,7 +343,8 @@
       "departure_time": "10:25",
       "arrival_time": "12:45",
       "frequency_label": "Daily",
-      "status": "ACTIVE"
+      "status": "ACTIVE",
+      "aircraft_type": null
     },
     {
       "airline": "JL",
@@ -350,7 +357,8 @@
       "departure_time": "10:10",
       "arrival_time": "12:40",
       "frequency_label": "Daily",
-      "status": "ACTIVE"
+      "status": "ACTIVE",
+      "aircraft_type": null
     },
     {
       "airline": "MM",
@@ -363,7 +371,8 @@
       "departure_time": "09:00",
       "arrival_time": "10:50",
       "frequency_label": "10x weekly",
-      "status": "ACTIVE"
+      "status": "ACTIVE",
+      "aircraft_type": null
     },
     {
       "airline": "RS",
@@ -376,7 +385,8 @@
       "departure_time": null,
       "arrival_time": null,
       "frequency_label": "Suspended",
-      "status": "SUSPENDED"
+      "status": "SUSPENDED",
+      "aircraft_type": null
     }
   ],
   "news": [

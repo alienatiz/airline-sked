@@ -34,6 +34,18 @@ function formatFlightWindow(route) {
   return `${route.departure_time} → ${route.arrival_time}`;
 }
 
+function formatFlightNumber(route) {
+  return route.flight_number || "미수집";
+}
+
+function formatAircraftType(route) {
+  return route.aircraft_type || "미수집";
+}
+
+function formatSourceMode(mode) {
+  return mode === "database" ? "DB 최신" : "문서 샘플";
+}
+
 function renderStats() {
   const { summary } = state.dashboard;
   const stats = [
@@ -51,7 +63,7 @@ function renderStats() {
     },
     { label: "긴급 변경", value: summary.high_changes, sub: "current snapshot", color: "var(--high)" },
     { label: "신규 취항", value: summary.new_routes, sub: "current snapshot", color: "var(--accent-amber)" },
-    { label: "총 감지 이벤트", value: summary.total_changes, sub: state.dashboard.source_mode, color: "var(--accent-purple)" },
+    { label: "총 감지 이벤트", value: summary.total_changes, sub: formatSourceMode(state.dashboard.source_mode), color: "var(--accent-purple)" },
   ];
 
   document.getElementById("statsRow").innerHTML = stats.map((item) => `
@@ -113,7 +125,8 @@ function renderRoutes() {
     <tr>
       <td><span class="route-code">${escapeHtml(route.airline)}</span></td>
       <td class="route-od">${escapeHtml(route.origin)}<span class="route-arrow">→</span>${escapeHtml(route.destination)}</td>
-      <td style="font-family:var(--mono); font-size:12px; color:var(--text-secondary);">${escapeHtml(route.flight_number)}</td>
+      <td class="route-meta ${route.flight_number ? "" : "missing"}">${escapeHtml(formatFlightNumber(route))}</td>
+      <td class="route-meta ${route.aircraft_type ? "" : "missing"}">${escapeHtml(formatAircraftType(route))}</td>
       <td style="font-family:var(--mono); font-size:12px;">${escapeHtml(formatFlightWindow(route))}</td>
       <td><span class="freq-badge">${escapeHtml(route.frequency_label)}</span></td>
       <td><span class="status-badge status-${escapeHtml(route.status.toLowerCase())}">${escapeHtml(formatStatus(route.status))}</span></td>
@@ -158,12 +171,15 @@ function renderGeneratedAt() {
   });
   document.getElementById("crawlCoverage").textContent =
     `KE route live · OZ schedule live`;
+  document.getElementById("routeSourceNote").textContent =
+    formatSourceMode(state.dashboard.source_mode);
 }
 
 function setError(message) {
   document.getElementById("statusLabel").textContent = "ERROR";
   document.getElementById("lastScan").textContent = message;
   document.getElementById("crawlCoverage").textContent = "—";
+  document.getElementById("routeSourceNote").textContent = "로드 실패";
 }
 
 function filterChanges(button) {
