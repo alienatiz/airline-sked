@@ -441,56 +441,6 @@
     color: var(--text);
   }
 
-  .stack {
-    position: relative;
-    z-index: 1;
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 0 40px 100px;
-  }
-
-  .stack h2 {
-    font-size: 28px;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-    text-align: center;
-    margin-bottom: 48px;
-  }
-
-  .stack-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-
-  .stack-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 18px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    transition: all 0.2s;
-  }
-
-  .stack-item:hover {
-    border-color: var(--text-muted);
-    background: var(--bg-elevated);
-  }
-
-  .stack-label {
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--text-muted);
-    min-width: 80px;
-  }
-
-  .stack-value {
-    font-size: 14px;
-    font-weight: 500;
-  }
-
   footer {
     position: relative;
     z-index: 1;
@@ -533,9 +483,8 @@
     .hero { padding: 120px 20px 60px; }
     .features-grid { grid-template-columns: 1fr; }
     .targets-columns { grid-template-columns: 1fr; }
-    .stack-grid { grid-template-columns: 1fr; }
     .route-visual { padding: 0 20px; }
-    .features, .targets, .stack { padding-left: 20px; padding-right: 20px; }
+    .features, .targets { padding-left: 20px; padding-right: 20px; }
   }
 </style>
 </head>
@@ -552,7 +501,6 @@
   <div class="nav-links">
     <a href="#features" class="nav-link">기능</a>
     <a href="#targets" class="nav-link">대상</a>
-    <a href="#stack" class="nav-link">기술스택</a>
     <a href="https://github.com/alienatiz/airline-sked" class="nav-link" target="_blank">GitHub</a>
     <a href="./dashboard.html" class="nav-link primary">대시보드 →</a>
   </div>
@@ -680,44 +628,6 @@
         <span class="target-tag">NGS 나가사키</span>
         <span class="target-tag">FSZ 시즈오카</span>
       </div>
-    </div>
-  </div>
-</section>
-
-<section class="stack fade-section" id="stack">
-  <h2>기술 스택</h2>
-  <div class="stack-grid">
-    <div class="stack-item">
-      <span class="stack-label">Backend</span>
-      <span class="stack-value">Python 3.11 + FastAPI</span>
-    </div>
-    <div class="stack-item">
-      <span class="stack-label">Database</span>
-      <span class="stack-value">SQLite + SQLModel</span>
-    </div>
-    <div class="stack-item">
-      <span class="stack-label">Scraping</span>
-      <span class="stack-value">httpx + Playwright</span>
-    </div>
-    <div class="stack-item">
-      <span class="stack-label">Scheduler</span>
-      <span class="stack-value">APScheduler</span>
-    </div>
-    <div class="stack-item">
-      <span class="stack-label">Notify</span>
-      <span class="stack-value">Telegram · Discord</span>
-    </div>
-    <div class="stack-item">
-      <span class="stack-label">Frontend</span>
-      <span class="stack-value">Vanilla HTML/JS</span>
-    </div>
-    <div class="stack-item">
-      <span class="stack-label">Deploy</span>
-      <span class="stack-value">GitHub Pages</span>
-    </div>
-    <div class="stack-item">
-      <span class="stack-label">License</span>
-      <span class="stack-value">MIT</span>
     </div>
   </div>
 </section>
