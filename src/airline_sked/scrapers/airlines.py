@@ -12,11 +12,16 @@
 
 from __future__ import annotations
 
+import re
+from datetime import date, datetime, timedelta
 from dataclasses import dataclass
+from typing import Any
 from typing import Optional
 
+from airline_sked.config import settings
 from airline_sked.scrapers.base import BaseScraper, ScrapeResult, ScrapedSchedule
 from airline_sked.scrapers import register_scraper
+
 
 @dataclass
 class AirlineConfig:
@@ -41,7 +46,7 @@ AIRLINE_CONFIGS: dict[str, AirlineConfig] = {
     "OZ": AirlineConfig(
         code="OZ", name="아시아나항공", country="KR",
         base_url="https://flyasiana.com",
-        schedule_url="https://flyasiana.com/C/US/EN/contents/book-online",
+        schedule_url="https://flyasiana.com/I/US/EN/RetrieveFlightSchedule.do",
         scrape_method="api",
     ),
     "7C": AirlineConfig(
@@ -132,6 +137,41 @@ JP_DESTINATIONS = [
     "NGS", "FSZ", "IBR", "TOY", "MYJ", "AOJ",
 ]
 
+KE_ROUTE_PATTERN = re.compile(
+    r"([A-Za-z][A-Za-z .,'/-]+?)\s+\(([A-Z]{3})\)\s*to\s*([A-Za-z][A-Za-z .,'/-]+?)\s+\(([A-Z]{3})\)"
+)
+
+OZ_CITY_BY_AIRPORT = {
+    "ICN": "SEL",
+    "GMP": "SEL",
+    "PUS": "PUS",
+    "CJU": "CJU",
+    "TAE": "TAE",
+    "CJJ": "CJJ",
+    "MWX": "MWX",
+    "NRT": "TYO",
+    "HND": "TYO",
+    "KIX": "OSA",
+    "FUK": "FUK",
+    "NGO": "NGO",
+    "CTS": "SPK",
+    "OKA": "OKA",
+    "KOJ": "KOJ",
+    "OIT": "OIT",
+    "KMJ": "KMJ",
+    "TAK": "TAK",
+    "HIJ": "HIJ",
+    "SDJ": "SDJ",
+    "KMQ": "KMQ",
+    "NGS": "NGS",
+    "FSZ": "FSZ",
+    "IBR": "IBR",
+    "TOY": "TOY",
+    "MYJ": "MYJ",
+    "AOJ": "AOJ",
+}
+
+
 class AirlineScraper(BaseScraper):
     """설정 기반 항공사 스크래퍼.
 
@@ -175,7 +215,11 @@ class AirlineScraper(BaseScraper):
             )
 
         try:
-            if self.config.scrape_method == "api":
+            if self.airline_code == "KE":
+                await self._scrape_ke_live(result, origins, destinations)
+            elif self.airline_code == "OZ":
+                await self._scrape_oz_live(result, origins, destinations)
+            elif self.config.scrape_method == "api":
                 await self._scrape_via_api(result, origins, destinations)
             elif self.config.scrape_method == "html":
                 await self._scrape_via_html(result, origins, destinations)
@@ -247,6 +291,258 @@ class AirlineScraper(BaseScraper):
                 await browser.close()
         """
         self._log_info("Playwright 스크래핑 (미구현 - 템플릿)")
+
+    async def _scrape_ke_live(
+        self, result: ScrapeResult, origins: list[str], destinations: list[str]
+    ) -> None:
+        """Korean Air route crawl via the public route/deals page."""
+        routes = await self._load_ke_routes()
+        allowed_origins = set(origins)
+        allowed_destinations = set(destinations)
+        seen: set[tuple[str, str]] = set()
+
+        for origin, destination in routes:
+            if origin not in allowed_origins or destination not in allowed_destinations:
+                continue
+            if (origin, destination) in seen:
+                continue
+            seen.add((origin, destination))
+            result.schedules.append(
+                ScrapedSchedule(
+                    airline_code=self.airline_code,
+                    flight_number=f"{self.airline_code}-{origin}-{destination}",
+                    origin=origin,
+                    destination=destination,
+                    departure_time="00:00",
+                    arrival_time="00:00",
+                    days_of_week="1",
+                    aircraft_type=None,
+                    frequency_weekly=None,
+                )
+            )
+
+        if not result.schedules:
+            result.errors.append("No Korean Air KR->JP routes were extracted from the live page.")
+
+    async def _scrape_oz_live(
+        self, result: ScrapeResult, origins: list[str], destinations: list[str]
+    ) -> None:
+        """Asiana weekly schedule crawl via the official schedule page."""
+        start_date = date.today() + timedelta(days=14)
+        direct_segments: list[dict[str, Any]] = []
+
+        from playwright.async_api import async_playwright
+
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=settings.scrape_browser_headless)
+            context = await browser.new_context(user_agent=settings.scrape_browser_user_agent)
+            page = await context.new_page()
+            await page.goto(
+                self.config.schedule_url,
+                wait_until="domcontentloaded",
+                timeout=settings.scrape_browser_timeout_ms,
+            )
+            await page.wait_for_timeout(2500)
+
+            for origin in origins:
+                for destination in destinations:
+                    if origin not in KR_ORIGINS or destination not in JP_DESTINATIONS:
+                        continue
+
+                    for offset in range(7):
+                        target_date = start_date + timedelta(days=offset)
+                        payload = _build_oz_search_payload(origin, destination, target_date)
+                        response = await page.evaluate(
+                            """
+                            async ({ payload }) => {
+                              const res = await fetch('RetrieveFlightScheduleSearch.do', {
+                                method: 'POST',
+                                headers: {
+                                  'X-Requested-With': 'XMLHttpRequest',
+                                  'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                                },
+                                body: new URLSearchParams(payload).toString(),
+                                credentials: 'include',
+                              });
+                              const text = await res.text();
+                              try {
+                                return { ok: res.ok, status: res.status, data: JSON.parse(text) };
+                              } catch (error) {
+                                return { ok: res.ok, status: res.status, text };
+                              }
+                            }
+                            """,
+                            {"payload": payload},
+                        )
+
+                        if not response.get("ok") or "data" not in response:
+                            message = (
+                                f"OZ schedule query failed for {origin}-{destination} "
+                                f"on {target_date:%Y-%m-%d}: status={response.get('status')}"
+                            )
+                            if response.get("text"):
+                                message += f" body={response['text'][:120]}"
+                            result.errors.append(message)
+                            await self._delay()
+                            continue
+
+                        direct_segments.extend(
+                            _extract_oz_direct_segments(response["data"], origin, destination)
+                        )
+                        await self._delay()
+
+            await context.close()
+            await browser.close()
+
+        result.schedules.extend(_build_oz_weekly_schedules(self.airline_code, direct_segments))
+        if not result.schedules and not result.errors:
+            result.errors.append("No Asiana schedules were returned from the live schedule page.")
+
+    async def _load_ke_routes(self) -> list[tuple[str, str]]:
+        """Load Korean Air route cards using a browser context."""
+        from playwright.async_api import async_playwright
+
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=settings.scrape_browser_headless)
+            context = await browser.new_context(user_agent=settings.scrape_browser_user_agent)
+            page = await context.new_page()
+            await page.goto(
+                self.config.schedule_url,
+                wait_until="domcontentloaded",
+                timeout=settings.scrape_browser_timeout_ms,
+            )
+            await page.wait_for_timeout(3000)
+            body_text = await page.locator("body").inner_text()
+            await context.close()
+            await browser.close()
+        return _extract_ke_routes_from_text(body_text)
+
+
+def _extract_ke_routes_from_text(text: str) -> list[tuple[str, str]]:
+    """Extract KR->JP routes from the Korean Air deals page text."""
+    matches = KE_ROUTE_PATTERN.findall(" ".join(text.replace("\xa0", " ").split()))
+    routes: list[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for _, origin, _, destination in matches:
+        route = (origin, destination)
+        if origin not in KR_ORIGINS or destination not in JP_DESTINATIONS:
+            continue
+        if route in seen:
+            continue
+        seen.add(route)
+        routes.append(route)
+    return routes
+
+
+def _build_oz_search_payload(origin: str, destination: str, target_date: date) -> dict[str, str]:
+    """Build the payload used by Asiana's schedule AJAX call."""
+    return {
+        "departureArea": "",
+        "departureAirport": origin,
+        "departureCity": OZ_CITY_BY_AIRPORT.get(origin, origin),
+        "departureMultiCity": "false",
+        "arrivalArea": "",
+        "arrivalAirport": destination,
+        "arrivalMultiCity": "false",
+        "departureDate": target_date.strftime("%Y%m%d"),
+        "arrivalDate": "",
+        "tripType": "OW",
+    }
+
+
+def _extract_oz_direct_segments(
+    payload: dict[str, Any], expected_origin: str, expected_destination: str
+) -> list[dict[str, Any]]:
+    """Extract direct Asiana-operated segments from the schedule response."""
+    time_table = payload.get("timeTable") or {}
+    flight_rows = time_table.get("departureTimeTableAvailDataList") or []
+    matches: list[dict[str, Any]] = []
+
+    for row in flight_rows:
+        paths = row.get("flightInfoDataList") or []
+        if not paths or not isinstance(paths[0], list):
+            continue
+        segments = paths[0]
+        if len(segments) != 1:
+            continue
+        segment = segments[0]
+        if (segment.get("carrierCode") or "").upper() != "OZ":
+            continue
+        if segment.get("departureAirport") != expected_origin:
+            continue
+        if segment.get("arrivalAirport") != expected_destination:
+            continue
+        matches.append(segment)
+
+    return matches
+
+
+def _build_oz_weekly_schedules(
+    airline_code: str, segments: list[dict[str, Any]]
+) -> list[ScrapedSchedule]:
+    """Collapse multiple day-specific Asiana results into weekly schedules."""
+    grouped: dict[tuple[str, str, str, str, str, str | None], set[date]] = {}
+
+    for segment in segments:
+        departure_date = _parse_compact_date(segment.get("departureDate"))
+        if departure_date is None:
+            continue
+
+        key = (
+            segment.get("departureAirport", ""),
+            segment.get("arrivalAirport", ""),
+            _compact_to_hhmm(segment.get("departureDate")),
+            _compact_to_hhmm(segment.get("arrivalDate")),
+            f"{segment.get('carrierCode', airline_code)}{segment.get('flightNo', '')}",
+            segment.get("aircraftType") or None,
+        )
+        grouped.setdefault(key, set()).add(departure_date)
+
+    schedules: list[ScrapedSchedule] = []
+    for key, dates in grouped.items():
+        if not dates:
+            continue
+        origin, destination, departure_time, arrival_time, flight_number, aircraft_type = key
+        ordered_dates = sorted(dates)
+        days = sorted({d.isoweekday() for d in ordered_dates})
+        schedules.append(
+            ScrapedSchedule(
+                airline_code=airline_code,
+                flight_number=flight_number,
+                origin=origin,
+                destination=destination,
+                departure_time=departure_time,
+                arrival_time=arrival_time,
+                days_of_week=",".join(str(day) for day in days),
+                effective_from=ordered_dates[0],
+                effective_to=ordered_dates[-1],
+                aircraft_type=aircraft_type,
+                frequency_weekly=len(days),
+            )
+        )
+
+    schedules.sort(key=lambda s: (s.origin, s.destination, s.flight_number, s.departure_time))
+    return schedules
+
+
+def _parse_compact_date(value: Any) -> date | None:
+    """Parse YYYYMMDD or YYYYMMDDHHMM values."""
+    if not value:
+        return None
+    text = str(value)
+    if len(text) < 8 or not text[:8].isdigit():
+        return None
+    return datetime.strptime(text[:8], "%Y%m%d").date()
+
+
+def _compact_to_hhmm(value: Any) -> str:
+    """Convert YYYYMMDDHHMM timestamps to HH:MM."""
+    if not value:
+        return "00:00"
+    text = str(value)
+    if len(text) >= 12 and text[8:12].isdigit():
+        return f"{text[8:10]}:{text[10:12]}"
+    return "00:00"
 
 def _create_and_register_all() -> None:
     """AIRLINE_CONFIGS의 모든 항공사에 대해 스크래퍼 클래스를 동적 생성 및 등록."""
