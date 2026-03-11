@@ -52,13 +52,13 @@ function formatRouteSource(route) {
 
 function formatAirlineSnapshot(airline) {
   if (airline.live_routes > 0) {
-    return `${airline.live_routes} live routes`;
+    return `${airline.live_routes} official routes`;
   }
   if (airline.routes > 0) {
-    return `${airline.routes} ${state.dashboard.source_mode === "database" ? "current" : "sample"} routes`;
+    return `${airline.routes} ${state.dashboard.source_mode === "database" ? "airline" : "sample"} routes`;
   }
   if (airline.crawl_status !== "planned") {
-    return "crawler ready";
+    return "source ready";
   }
   return airline.carrier_type;
 }
@@ -70,8 +70,8 @@ function buildCoverageText() {
 
   if (state.dashboard.source_mode !== "database") {
     return configured.length > 0
-      ? `Configured crawlers: ${configured.map((item) => `${item} live`).join(" · ")}`
-      : "Configured crawlers: none";
+      ? `Official sources: ${configured.map((item) => `${item} data`).join(" · ")}`
+      : "Official sources: none";
   }
 
   const liveByAirline = new Map();
@@ -81,32 +81,32 @@ function buildCoverageText() {
   });
 
   if (liveByAirline.size === 0) {
-    return "Current snapshot has no live rows";
+    return "Current snapshot has no airline data rows";
   }
 
-  return `Current live routes: ${Array.from(liveByAirline.entries())
+  return `Current airline routes: ${Array.from(liveByAirline.entries())
     .map(([airline, count]) => `${airline} ${count}`)
     .join(" · ")}`;
 }
 
 function buildRouteSourceNote() {
   if (state.dashboard.source_mode === "database") {
-    return `DB latest · ${state.dashboard.summary.live_snapshot_routes} live routes`;
+    return `Official airline data · ${state.dashboard.summary.live_snapshot_routes} routes`;
   }
-  return "Sample snapshot · live crawlers shown separately";
+  return "Sample data · official airline sources shown separately";
 }
 
 function renderStats() {
   const { summary } = state.dashboard;
   const liveCrawlerStat = state.dashboard.source_mode === "database"
     ? {
-      label: "라이브 스냅샷",
+      label: "항공사 데이터",
       value: summary.live_snapshot_airlines,
-      sub: `${summary.live_snapshot_routes} current routes`,
+      sub: `${summary.live_snapshot_routes} official routes`,
       color: "var(--accent-green)",
     }
     : {
-      label: "구성된 크롤러",
+      label: "공식 소스",
       value: summary.live_airlines,
       sub: `schedule ${summary.live_schedule_airlines} · route ${summary.live_route_airlines}`,
       color: "var(--accent-green)",
@@ -190,6 +190,9 @@ function renderRoutes() {
             : escapeHtml(formatFlightNumber(route))}
           <div class="route-source-row">
             <span class="route-source-badge ${escapeHtml(route.route_source)}" title="${escapeHtml(route.route_source_note || "")}">${escapeHtml(formatRouteSource(route))}</span>
+            ${route.schedule_source_url
+              ? `<a class="route-source-link" href="${escapeHtml(route.schedule_source_url)}" target="_blank" rel="noreferrer">AIRLINE</a>`
+              : ""}
             ${route.flight_history_url
               ? `<a class="route-source-link" href="${escapeHtml(route.flight_history_url)}" target="_blank" rel="noreferrer">FR24</a>`
               : ""}
@@ -232,7 +235,7 @@ function renderNews() {
 function renderGeneratedAt() {
   const generatedAt = new Date(state.dashboard.generated_at);
   document.getElementById("statusLabel").textContent =
-    state.dashboard.source_mode === "database" ? "LIVE SNAPSHOT" : "SAMPLE SNAPSHOT";
+    state.dashboard.source_mode === "database" ? "AIRLINE DATA" : "SAMPLE DATA";
   document.getElementById("lastScan").textContent = generatedAt.toLocaleString("ko-KR", {
     year: "numeric",
     month: "2-digit",

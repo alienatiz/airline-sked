@@ -33,13 +33,13 @@ EMOJI_BY_TYPE = {
 CRAWL_CAPABILITIES = {
     "KE": {
         "crawl_status": "live-route",
-        "crawl_label": "LIVE ROUTE",
-        "crawl_note": "Official page route extraction",
+        "crawl_label": "OFFICIAL ROUTE",
+        "crawl_note": "Official airline route data",
     },
     "OZ": {
         "crawl_status": "live-schedule",
-        "crawl_label": "LIVE SCHEDULE",
-        "crawl_note": "Official browser-backed schedule search",
+        "crawl_label": "OFFICIAL SCHEDULE",
+        "crawl_note": "Official airline schedule data",
     },
 }
 
@@ -117,8 +117,8 @@ def build_route_source_metadata(
     if snapshot_source == "seed":
         return {
             "route_source": "sample",
-            "route_source_label": "SAMPLE",
-            "route_source_note": "Docs sample route data",
+            "route_source_label": "SAMPLE DATA",
+            "route_source_note": "Sample route data for the docs preview",
             "has_live_data": False,
         }
 
@@ -126,15 +126,15 @@ def build_route_source_metadata(
     if crawl["crawl_status"] == "live-schedule":
         return {
             "route_source": "live-schedule",
-            "route_source_label": "LIVE SCHEDULE",
-            "route_source_note": "Latest DB snapshot from the live schedule crawler",
+            "route_source_label": "OFFICIAL SCHEDULE",
+            "route_source_note": "Latest DB snapshot from official airline schedule data",
             "has_live_data": True,
         }
     if crawl["crawl_status"] == "live-route":
         return {
             "route_source": "live-route",
-            "route_source_label": "LIVE ROUTE",
-            "route_source_note": "Latest DB snapshot from the live route crawler",
+            "route_source_label": "OFFICIAL ROUTE",
+            "route_source_note": "Latest DB snapshot from official airline route data",
             "has_live_data": True,
         }
 
@@ -179,6 +179,7 @@ def build_route_payload(
         "flight_number": flight_number,
         "primary_flight_number": primary_flight_number,
         "flight_history_url": build_flightradar24_url(primary_flight_number),
+        "schedule_source_url": airline.get("schedule_url") or airline.get("website_url"),
         "departure_time": departure_time,
         "arrival_time": arrival_time,
         "frequency_label": frequency_label,

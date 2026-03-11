@@ -69,7 +69,7 @@ def test_load_database_routes_prefers_latest_schedule_and_hides_placeholders(tmp
     assert routes[0]["airline"] == "KE"
     assert routes[0]["flight_number"] is None
     assert routes[0]["route_source"] == "live-route"
-    assert routes[0]["route_source_label"] == "LIVE ROUTE"
+    assert routes[0]["route_source_label"] == "OFFICIAL ROUTE"
     assert routes[0]["flight_history_url"] is None
     assert routes[0]["has_live_data"] is True
     assert routes[0]["aircraft_type"] is None
@@ -153,7 +153,7 @@ def test_build_route_payload_marks_sample_route_and_adds_flightradar_link():
         status="ACTIVE",
         aircraft_type="B787-9",
         snapshot_source="seed",
-        airline_map={"KE": {"name_ko": "대한항공"}},
+        airline_map={"KE": {"name_ko": "대한항공", "schedule_url": "https://example.com/ke-schedule"}},
         airport_map={
             "ICN": {"city_ko": "인천", "name_ko": "인천"},
             "NRT": {"city_ko": "도쿄", "name_ko": "도쿄"},
@@ -161,10 +161,11 @@ def test_build_route_payload_marks_sample_route_and_adds_flightradar_link():
     )
 
     assert route["route_source"] == "sample"
-    assert route["route_source_label"] == "SAMPLE"
+    assert route["route_source_label"] == "SAMPLE DATA"
     assert route["has_live_data"] is False
     assert route["primary_flight_number"] == "KE701"
     assert route["flight_history_url"] == "https://www.flightradar24.com/data/flights/ke701"
+    assert route["schedule_source_url"] == "https://example.com/ke-schedule"
 
 
 def test_build_pages_script_bootstraps_src_path(monkeypatch):
