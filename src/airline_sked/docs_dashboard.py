@@ -43,6 +43,12 @@ CRAWL_CAPABILITIES = {
     },
 }
 
+DEFAULT_CRAWL_CAPABILITY = {
+    "crawl_status": "planned",
+    "crawl_label": "PLANNED",
+    "crawl_note": "Crawler not implemented yet",
+}
+
 
 def load_json(path: Path) -> list[dict] | dict:
     with path.open("r", encoding="utf-8") as handle:
@@ -80,6 +86,66 @@ def pick_related_news(
     return None
 
 
+def get_crawl_capability(airline_code: str) -> dict[str, str]:
+    return CRAWL_CAPABILITIES.get(airline_code, DEFAULT_CRAWL_CAPABILITY)
+
+
+def extract_primary_flight_number(flight_number: str | None) -> str | None:
+    if not flight_number:
+        return None
+
+    compact = "".join(flight_number.upper().split())
+    if not compact:
+        return None
+
+    primary = compact.split("/", maxsplit=1)[0]
+    return primary or None
+
+
+def build_flightradar24_url(flight_number: str | None) -> str | None:
+    primary = extract_primary_flight_number(flight_number)
+    if not primary:
+        return None
+    return f"https://www.flightradar24.com/data/flights/{primary.lower()}"
+
+
+def build_route_source_metadata(
+    *,
+    airline_code: str,
+    snapshot_source: str,
+) -> dict[str, str | bool]:
+    if snapshot_source == "seed":
+        return {
+            "route_source": "sample",
+            "route_source_label": "SAMPLE",
+            "route_source_note": "Docs sample route data",
+            "has_live_data": False,
+        }
+
+    crawl = get_crawl_capability(airline_code)
+    if crawl["crawl_status"] == "live-schedule":
+        return {
+            "route_source": "live-schedule",
+            "route_source_label": "LIVE SCHEDULE",
+            "route_source_note": "Latest DB snapshot from the live schedule crawler",
+            "has_live_data": True,
+        }
+    if crawl["crawl_status"] == "live-route":
+        return {
+            "route_source": "live-route",
+            "route_source_label": "LIVE ROUTE",
+            "route_source_note": "Latest DB snapshot from the live route crawler",
+            "has_live_data": True,
+        }
+
+    return {
+        "route_source": "database",
+        "route_source_label": "DB SNAPSHOT",
+        "route_source_note": "Latest DB snapshot",
+        "has_live_data": False,
+    }
+
+
 def build_route_payload(
     *,
     airline_code: str,
@@ -91,12 +157,18 @@ def build_route_payload(
     frequency_label: str,
     status: str,
     aircraft_type: str | None,
+    snapshot_source: str,
     airline_map: dict[str, dict],
     airport_map: dict[str, dict],
 ) -> dict:
     airline = airline_map.get(airline_code, {"name_ko": airline_code})
     origin = airport_map.get(origin_code, {"city_ko": origin_code, "name_ko": origin_code})
     destination = airport_map.get(destination_code, {"city_ko": destination_code, "name_ko": destination_code})
+    primary_flight_number = extract_primary_flight_number(flight_number)
+    source_meta = build_route_source_metadata(
+        airline_code=airline_code,
+        snapshot_source=snapshot_source,
+    )
     return {
         "airline": airline_code,
         "airline_name": airline["name_ko"],
@@ -105,11 +177,14 @@ def build_route_payload(
         "destination": destination_code,
         "destination_city": destination["city_ko"] or destination["name_ko"],
         "flight_number": flight_number,
+        "primary_flight_number": primary_flight_number,
+        "flight_history_url": build_flightradar24_url(primary_flight_number),
         "departure_time": departure_time,
         "arrival_time": arrival_time,
         "frequency_label": frequency_label,
         "status": status,
         "aircraft_type": aircraft_type,
+        **source_meta,
     }
 
 
@@ -129,6 +204,7 @@ def build_seed_routes(
             frequency_label=item["frequency_label"],
             status=item["status"],
             aircraft_type=item.get("aircraft_type"),
+            snapshot_source="seed",
             airline_map=airline_map,
             airport_map=airport_map,
         )
@@ -264,6 +340,7 @@ def load_database_routes(
                     ),
                     status=row["route_status"],
                     aircraft_type=row["aircraft_type"],
+                    snapshot_source="database",
                     airline_map=airline_map,
                     airport_map=airport_map,
                 )
@@ -294,6 +371,7 @@ def build_dashboard_payload() -> dict:
         generated_dt = database_generated_dt or generated_dt
 
     route_counter = Counter(route["airline"] for route in routes)
+    live_route_counter = Counter(route["airline"] for route in routes if route["has_live_data"])
     active_routes = sum(1 for route in routes if route["status"] == "ACTIVE")
 
     changes = []
@@ -345,14 +423,7 @@ def build_dashboard_payload() -> dict:
     live_schedule_airlines = 0
     live_route_airlines = 0
     for item in airlines:
-        crawl = CRAWL_CAPABILITIES.get(
-            item["iata_code"],
-            {
-                "crawl_status": "planned",
-                "crawl_label": "PLANNED",
-                "crawl_note": "Crawler not implemented yet",
-            },
-        )
+        crawl = get_crawl_capability(item["iata_code"])
         if crawl["crawl_status"] != "planned":
             live_airlines += 1
         if crawl["crawl_status"] == "live-schedule":
@@ -366,6 +437,7 @@ def build_dashboard_payload() -> dict:
                 "country": item["country"],
                 "carrier_type": item["carrier_type"],
                 "routes": route_counter.get(item["iata_code"], 0),
+                "live_routes": live_route_counter.get(item["iata_code"], 0),
                 "website_url": item["website_url"],
                 "schedule_url": item["schedule_url"],
                 "crawl_status": crawl["crawl_status"],
@@ -387,6 +459,8 @@ def build_dashboard_payload() -> dict:
             "live_airlines": live_airlines,
             "live_schedule_airlines": live_schedule_airlines,
             "live_route_airlines": live_route_airlines,
+            "live_snapshot_airlines": sum(1 for count in live_route_counter.values() if count > 0),
+            "live_snapshot_routes": sum(live_route_counter.values()),
             "high_changes": high_changes,
             "new_routes": new_routes,
             "total_changes": len(changes),

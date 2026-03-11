@@ -486,6 +486,74 @@
     color: var(--text-muted);
   }
 
+  .route-flight {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .route-flight-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+  }
+
+  .route-flight-link:hover {
+    color: var(--accent-cyan);
+  }
+
+  .route-source-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .route-source-badge {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-muted);
+    letter-spacing: 0.2px;
+  }
+
+  .route-source-badge.sample {
+    color: var(--text-muted);
+    background: rgba(100,116,139,0.08);
+  }
+
+  .route-source-badge.live-schedule {
+    color: var(--accent-green);
+    border-color: rgba(74,222,128,0.25);
+    background: rgba(74,222,128,0.08);
+  }
+
+  .route-source-badge.live-route {
+    color: var(--accent-blue);
+    border-color: rgba(56,189,248,0.25);
+    background: rgba(56,189,248,0.08);
+  }
+
+  .route-source-badge.database {
+    color: var(--accent-purple);
+    border-color: rgba(167,139,250,0.25);
+    background: rgba(167,139,250,0.08);
+  }
+
+  .route-source-link {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent-cyan);
+    text-decoration: none;
+  }
+
+  .route-source-link:hover {
+    text-decoration: underline;
+  }
+
   .status-badge {
     font-family: var(--mono);
     font-size: 10px;
