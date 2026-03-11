@@ -35,6 +35,8 @@ jobs:
           python-version: '3.11'
 
       - name: Build dashboard snapshot
+        env:
+          PYTHONPATH: ${{ github.workspace }}/src
         run: python scripts/build_pages_data.py
 
       - name: Setup Pages

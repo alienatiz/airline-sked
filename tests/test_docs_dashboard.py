@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import importlib.util
 import sqlite3
+import sys
+from pathlib import Path
 
 import airline_sked.docs_dashboard as docs_dashboard
 
@@ -71,3 +74,19 @@ def test_load_database_routes_prefers_latest_schedule_and_hides_placeholders(tmp
     assert routes[1]["flight_number"] == "OZ178"
     assert routes[1]["aircraft_type"] == "A321"
     assert routes[1]["frequency_label"] == "Daily"
+
+
+def test_build_pages_script_bootstraps_src_path(monkeypatch):
+    script_path = Path(__file__).resolve().parent.parent / "scripts" / "build_pages_data.py"
+    src_path = str(script_path.parent.parent / "src")
+
+    monkeypatch.setattr(sys, "path", [entry for entry in sys.path if entry != src_path])
+
+    spec = importlib.util.spec_from_file_location("build_pages_data_test", script_path)
+    assert spec is not None
+    assert spec.loader is not None
+
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    assert sys.path[0] == src_path
