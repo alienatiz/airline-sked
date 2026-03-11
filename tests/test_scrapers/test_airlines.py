@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from datetime import date
 
+import pytest
+
 from airline_sked.scrapers.airlines import (
+    AIRLINE_CONFIGS,
+    AirlineScraper,
     _build_oz_search_payload,
     _build_oz_weekly_schedules,
     _extract_ke_routes_from_text,
@@ -138,3 +142,19 @@ def test_build_oz_weekly_schedules_merges_days_by_flight():
     assert schedules[0].days_of_week == "1,3"
     assert schedules[0].frequency_weekly == 2
     assert schedules[0].departure_time == "09:30"
+
+
+@pytest.mark.asyncio
+async def test_ke_live_scrape_marks_route_only_rows(monkeypatch):
+    scraper = AirlineScraper(AIRLINE_CONFIGS["KE"])
+
+    async def fake_load_ke_routes():
+        return [("ICN", "NRT")]
+
+    monkeypatch.setattr(scraper, "_load_ke_routes", fake_load_ke_routes)
+
+    result = await scraper.scrape_schedules(origin="ICN", destination="NRT")
+
+    assert len(result.schedules) == 1
+    assert result.schedules[0].has_schedule_details is False
+    assert result.schedules[0].flight_number == ""

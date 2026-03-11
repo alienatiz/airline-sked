@@ -84,6 +84,63 @@ def test_load_database_routes_prefers_latest_schedule_and_hides_placeholders(tmp
     assert routes[1]["frequency_label"] == "Daily"
 
 
+def test_load_database_routes_prefers_latest_informative_schedule_over_newer_placeholder(tmp_path, monkeypatch):
+    db_path = tmp_path / "airline_sked.db"
+    connection = sqlite3.connect(db_path)
+    cursor = connection.cursor()
+    cursor.execute(
+        """
+        CREATE TABLE routes (
+            id INTEGER PRIMARY KEY,
+            airline_code TEXT,
+            origin TEXT,
+            destination TEXT,
+            status TEXT
+        )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE schedules (
+            id INTEGER PRIMARY KEY,
+            route_id INTEGER,
+            flight_number TEXT,
+            departure_time TEXT,
+            arrival_time TEXT,
+            aircraft_type TEXT,
+            frequency_weekly INTEGER,
+            days_of_week TEXT,
+            collected_at TEXT
+        )
+        """
+    )
+    cursor.execute("INSERT INTO routes VALUES (1, 'KE', 'ICN', 'NRT', 'ACTIVE')")
+    cursor.execute(
+        "INSERT INTO schedules VALUES "
+        "(1, 1, 'KE701', '09:20', '11:40', 'B787', 7, '1,2,3,4,5,6,7', '2026-03-09T01:00:00'),"
+        "(2, 1, 'KE-ICN-NRT', '00:00', '00:00', NULL, NULL, 'UNKNOWN', '2026-03-09T02:00:00')"
+    )
+    connection.commit()
+    connection.close()
+
+    monkeypatch.setattr(docs_dashboard, "DB_FILE", db_path)
+
+    airline_map = {"KE": {"name_ko": "대한항공"}}
+    airport_map = {
+        "ICN": {"city_ko": "인천", "name_ko": "인천"},
+        "NRT": {"city_ko": "도쿄", "name_ko": "도쿄"},
+    }
+
+    routes, generated_dt = docs_dashboard.load_database_routes(airline_map, airport_map)
+
+    assert generated_dt is not None
+    assert generated_dt.isoformat() == "2026-03-09T02:00:00"
+    assert routes[0]["flight_number"] == "KE701"
+    assert routes[0]["departure_time"] == "09:20"
+    assert routes[0]["arrival_time"] == "11:40"
+    assert routes[0]["flight_history_url"] == "https://www.flightradar24.com/data/flights/ke701"
+
+
 def test_build_route_payload_marks_sample_route_and_adds_flightradar_link():
     route = docs_dashboard.build_route_payload(
         airline_code="KE",

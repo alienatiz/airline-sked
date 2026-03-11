@@ -31,6 +31,7 @@ class ScrapedSchedule:
     effective_to: Optional[date] = None
     aircraft_type: Optional[str] = None
     frequency_weekly: Optional[int] = None
+    has_schedule_details: bool = True
 
     @property
     def od_pair(self) -> str:

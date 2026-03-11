@@ -310,14 +310,15 @@ class AirlineScraper(BaseScraper):
             result.schedules.append(
                 ScrapedSchedule(
                     airline_code=self.airline_code,
-                    flight_number=f"{self.airline_code}-{origin}-{destination}",
+                    flight_number="",
                     origin=origin,
                     destination=destination,
-                    departure_time="00:00",
-                    arrival_time="00:00",
-                    days_of_week="UNKNOWN",
+                    departure_time="",
+                    arrival_time="",
+                    days_of_week="",
                     aircraft_type=None,
                     frequency_weekly=None,
+                    has_schedule_details=False,
                 )
             )
 

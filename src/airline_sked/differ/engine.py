@@ -48,23 +48,31 @@ class DiffEngine:
         for route_key, schedules in scraped_routes.items():
             if route_key not in db_route_keys:
                 sample = schedules[0]
+                summary = f"{result.airline_code} {sample.od_pair} 신규 취항 감지!"
+                detail: dict[str, str | None] | None = None
+                if sample.has_schedule_details:
+                    detail = {
+                        "flight_number": sample.flight_number or None,
+                        "departure_time": sample.departure_time or None,
+                        "arrival_time": sample.arrival_time or None,
+                        "days_of_week": sample.days_of_week or None,
+                        "aircraft_type": sample.aircraft_type,
+                    }
+                    detail = {key: value for key, value in detail.items() if value}
+                    extra = []
+                    if sample.flight_number:
+                        extra.append(f"편명: {sample.flight_number}")
+                    if sample.days_of_week:
+                        extra.append(f"운항요일: {sample.days_of_week}")
+                    if extra:
+                        summary += " " + ", ".join(extra)
                 events.append(RouteEvent(
                     event_type=EventType.NEW_ROUTE,
                     airline_code=result.airline_code,
                     origin=sample.origin,
                     destination=sample.destination,
-                    summary=(
-                        f"{result.airline_code} {sample.od_pair} 신규 취항 감지! "
-                        f"편명: {sample.flight_number}, "
-                        f"운항요일: {sample.days_of_week}"
-                    ),
-                    detail={
-                        "flight_number": sample.flight_number,
-                        "departure_time": sample.departure_time,
-                        "arrival_time": sample.arrival_time,
-                        "days_of_week": sample.days_of_week,
-                        "aircraft_type": sample.aircraft_type,
-                    },
+                    summary=summary,
+                    detail=detail,
                 ))
 
         scraped_route_keys = set(scraped_routes.keys())
@@ -93,6 +101,9 @@ class DiffEngine:
     ) -> list[RouteEvent]:
         """기존 노선의 스케줄 상세 비교."""
         events: list[RouteEvent] = []
+        detailed_schedules = [schedule for schedule in new_schedules if schedule.has_schedule_details]
+        if not detailed_schedules:
+            return events
 
         stmt = (
             select(Schedule)
@@ -105,8 +116,9 @@ class DiffEngine:
         if not old_schedules:
             return events
 
+        reference_schedule = detailed_schedules[0]
         old_freq = old_schedules[0].frequency_weekly
-        new_freq = new_schedules[0].frequency_weekly
+        new_freq = reference_schedule.frequency_weekly
         if old_freq and new_freq and old_freq != new_freq:
             events.append(RouteEvent(
                 event_type=EventType.FREQ_CHANGE,
@@ -119,7 +131,7 @@ class DiffEngine:
             ))
 
         old_dep = old_schedules[0].departure_time
-        new_dep = new_schedules[0].departure_time
+        new_dep = reference_schedule.departure_time
         if old_dep and new_dep and old_dep != new_dep:
             events.append(RouteEvent(
                 event_type=EventType.TIME_CHANGE,
@@ -132,7 +144,7 @@ class DiffEngine:
             ))
 
         old_ac = old_schedules[0].aircraft_type
-        new_ac = new_schedules[0].aircraft_type
+        new_ac = reference_schedule.aircraft_type
         if old_ac and new_ac and old_ac != new_ac:
             events.append(RouteEvent(
                 event_type=EventType.AIRCRAFT_CHANGE,
@@ -205,6 +217,8 @@ class DiffEngine:
         resolved_routes = route_map or {}
 
         for scraped in result.schedules:
+            if not scraped.has_schedule_details:
+                continue
             route = resolved_routes.get(scraped.route_key)
             if route is None:
                 stmt = select(Route).where(

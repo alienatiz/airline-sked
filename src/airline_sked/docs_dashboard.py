@@ -260,6 +260,28 @@ def format_frequency_label(
     return base
 
 
+def schedule_row_priority(row: sqlite3.Row) -> int:
+    flight_number = row["flight_number"]
+    if flight_number and not is_placeholder_flight_number(
+        flight_number,
+        row["airline_code"],
+        row["origin_code"],
+        row["destination_code"],
+    ):
+        return 0
+
+    if (
+        (row["departure_time"] and row["departure_time"] != "00:00")
+        or (row["arrival_time"] and row["arrival_time"] != "00:00")
+        or (row["days_of_week"] and row["days_of_week"] != "UNKNOWN")
+        or row["frequency_weekly"] is not None
+        or row["aircraft_type"] is not None
+    ):
+        return 1
+
+    return 2
+
+
 def load_database_routes(
     airline_map: dict[str, dict],
     airport_map: dict[str, dict],
@@ -292,16 +314,11 @@ def load_database_routes(
                 s.arrival_time AS arrival_time,
                 s.aircraft_type AS aircraft_type,
                 s.frequency_weekly AS frequency_weekly,
-                s.days_of_week AS days_of_week
+                s.days_of_week AS days_of_week,
+                s.collected_at AS schedule_collected_at
             FROM routes AS r
             LEFT JOIN schedules AS s
-              ON s.id = (
-                SELECT s2.id
-                FROM schedules AS s2
-                WHERE s2.route_id = r.id
-                ORDER BY s2.collected_at DESC, s2.id DESC
-                LIMIT 1
-              )
+              ON s.route_id = r.id
             ORDER BY
               CASE r.status
                 WHEN 'ACTIVE' THEN 0
@@ -310,12 +327,33 @@ def load_database_routes(
               END,
               r.airline_code,
               r.origin,
-              r.destination
+              r.destination,
+              s.collected_at DESC,
+              s.id DESC
             """
         )
 
-        routes: list[dict] = []
+        selected_rows: list[sqlite3.Row] = []
+        selected_by_route: dict[tuple[str, str, str], tuple[int, sqlite3.Row]] = {}
+
         for row in cursor.fetchall():
+            key = (
+                row["airline_code"],
+                row["origin_code"],
+                row["destination_code"],
+            )
+            priority = schedule_row_priority(row)
+            existing = selected_by_route.get(key)
+            if existing is None:
+                selected_by_route[key] = (priority, row)
+                selected_rows.append(row)
+                continue
+            if priority < existing[0]:
+                selected_by_route[key] = (priority, row)
+                selected_rows[selected_rows.index(existing[1])] = row
+
+        routes: list[dict] = []
+        for row in selected_rows:
             flight_number = row["flight_number"]
             if is_placeholder_flight_number(
                 flight_number,
